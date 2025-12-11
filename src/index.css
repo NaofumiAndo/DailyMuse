@@ -1,0 +1,10 @@
+/* 
+  Styles are handled by Tailwind CDN in index.html.
+  Add custom global CSS here if needed, but avoid @tailwind directives 
+  unless a PostCSS build step is configured.
+*/
+
+body {
+  background-color: #fafaf9; /* muse-50 fallback */
+  color: #1c1917; /* muse-900 fallback */
+}
