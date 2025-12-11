@@ -33,6 +33,7 @@ const Admin: React.FC = () => {
   const [status, setStatus] = useState<GenerationStatus>(GenerationStatus.IDLE);
   const [scheduledDate, setScheduledDate] = useState('');
   const [dateError, setDateError] = useState('');
+  const [uploadError, setUploadError] = useState('');
   
   // Management List
   const [existingMuses, setExistingMuses] = useState<MuseEntry[]>([]);
@@ -150,6 +151,7 @@ const Admin: React.FC = () => {
     }
 
     setStatus(GenerationStatus.UPLOADING);
+    setUploadError('');
 
     try {
       await uploadMuseEntry({
@@ -162,12 +164,22 @@ const Admin: React.FC = () => {
         concept,
         comicImage: generatedComicImage
       });
-      
+
       setStatus(GenerationStatus.COMPLETE);
+      setUploadError('');
       loadMuses();
-    } catch (e) {
-      console.error(e);
+    } catch (e: any) {
+      console.error('Upload failed:', e);
       setStatus(GenerationStatus.ERROR);
+
+      // Set user-friendly error message
+      if (e.message && e.message.includes('Storage rules')) {
+        setUploadError('Firebase Storage access denied. Please update your storage rules to allow public read. Check the browser console for details.');
+      } else if (e.message) {
+        setUploadError(e.message);
+      } else {
+        setUploadError('Upload failed. Please check the browser console for details.');
+      }
     }
   };
 
@@ -188,6 +200,8 @@ const Admin: React.FC = () => {
     setGeneratedComicImage(null);
     setStatus(GenerationStatus.IDLE);
     setScheduledDate('');
+    setDateError('');
+    setUploadError('');
   };
 
   if (authLoading) {
@@ -265,6 +279,19 @@ const Admin: React.FC = () => {
              <button onClick={handleSelectKey} className="text-xs bg-white border border-stone-300 px-3 py-1">Switch Key</button>
          </div>
       )}
+
+      {status === GenerationStatus.ERROR && uploadError ? (
+         <div className="mb-8 p-6 bg-red-50 border border-red-200 rounded-sm">
+           <h3 className="text-red-800 font-bold mb-2">Upload Failed</h3>
+           <p className="text-red-700 text-sm mb-4">{uploadError}</p>
+           <button
+             onClick={() => {setStatus(GenerationStatus.IDLE); setUploadError('');}}
+             className="bg-red-600 text-white px-4 py-2 rounded-sm text-xs font-bold hover:bg-red-700"
+           >
+             Dismiss
+           </button>
+         </div>
+      ) : null}
 
       {status === GenerationStatus.COMPLETE ? (
          <div className="text-center py-20">

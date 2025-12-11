@@ -101,10 +101,33 @@ export const checkDateConflict = async (dateStr: string): Promise<boolean> => {
 };
 
 // Helper to upload base64 images to Firebase Storage
-const uploadImageToStorage = async (path: string, dataUrl: string) => {
-  const storageRef = ref(storage, path);
-  await uploadString(storageRef, dataUrl, 'data_url');
-  return getDownloadURL(storageRef);
+const uploadImageToStorage = async (path: string, dataUrl: string): Promise<string> => {
+  try {
+    const storageRef = ref(storage, path);
+
+    // Upload the base64 data
+    const uploadResult = await uploadString(storageRef, dataUrl, 'data_url');
+    console.log('Upload successful:', uploadResult.metadata.fullPath);
+
+    // Get the download URL
+    const downloadURL = await getDownloadURL(storageRef);
+    console.log('Download URL obtained:', downloadURL);
+
+    return downloadURL;
+  } catch (error: any) {
+    console.error('Storage upload error:', error);
+
+    // Provide more specific error messages
+    if (error.code === 'storage/unauthorized') {
+      throw new Error('Storage access denied. Please check Firebase Storage rules.');
+    } else if (error.code === 'storage/canceled') {
+      throw new Error('Upload was canceled.');
+    } else if (error.code === 'storage/unknown') {
+      throw new Error('Unknown storage error occurred. Check your internet connection.');
+    }
+
+    throw error;
+  }
 };
 
 export const uploadMuseEntry = async (entry: MuseEntry): Promise<void> => {
@@ -112,14 +135,26 @@ export const uploadMuseEntry = async (entry: MuseEntry): Promise<void> => {
     let titleImageUrl = entry.titleImage;
     let comicImageUrl = entry.comicImage;
 
+    console.log('Starting image upload process...');
+
     // Upload Title Image if it's base64 (starts with data:)
     if (entry.titleImage && entry.titleImage.startsWith('data:')) {
-      titleImageUrl = await uploadImageToStorage(`muses/${entry.scheduledDate}/title`, entry.titleImage);
+      console.log('Uploading title image to storage...');
+      titleImageUrl = await uploadImageToStorage(
+        `muses/${entry.scheduledDate}/title.jpg`,
+        entry.titleImage
+      );
+      console.log('Title image uploaded successfully:', titleImageUrl);
     }
 
     // Upload Comic Image if it's base64
     if (entry.comicImage && entry.comicImage.startsWith('data:')) {
-      comicImageUrl = await uploadImageToStorage(`muses/${entry.scheduledDate}/comic`, entry.comicImage);
+      console.log('Uploading comic image to storage...');
+      comicImageUrl = await uploadImageToStorage(
+        `muses/${entry.scheduledDate}/comic.jpg`,
+        entry.comicImage
+      );
+      console.log('Comic image uploaded successfully:', comicImageUrl);
     }
 
     const entryToSave = {
@@ -130,9 +165,17 @@ export const uploadMuseEntry = async (entry: MuseEntry): Promise<void> => {
     };
 
     // We use the scheduledDate as the document ID
+    console.log('Saving entry to Firestore...');
     await setDoc(doc(db, COLLECTION_NAME, entry.scheduledDate), entryToSave);
-  } catch (error) {
+    console.log('Entry saved successfully!');
+  } catch (error: any) {
     console.error("Error uploading entry:", error);
+
+    // Provide user-friendly error messages
+    if (error.message && error.message.includes('Storage rules')) {
+      throw new Error('Firebase Storage rules are blocking the upload. Please update storage rules to allow public read access.');
+    }
+
     throw error;
   }
 };
