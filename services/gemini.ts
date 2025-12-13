@@ -30,7 +30,7 @@ ${charInstruction}`;
     const model = ai.getGenerativeModel({
       model: 'gemini-2.0-flash-exp',
       generationConfig: {
-        responseModalities: 'image'
+        responseModalities: ['Image']
       }
     });
 
@@ -92,7 +92,7 @@ Content from Your Boss:
     const model = ai.getGenerativeModel({
       model: 'gemini-2.0-flash-exp',
       generationConfig: {
-        responseModalities: 'image'
+        responseModalities: ['Image']
       }
     });
 
