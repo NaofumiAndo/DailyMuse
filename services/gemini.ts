@@ -15,9 +15,9 @@ const getFirstImageFromResponse = (response: any): string => {
 
 export const generateTitleImage = async (title: string, number: string, characterDescription: string): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  
-  const charInstruction = characterDescription 
-    ? `Feature this character in the illustration: ${characterDescription}` 
+
+  const charInstruction = characterDescription
+    ? `Feature this character in the illustration: ${characterDescription}`
     : "";
 
   const prompt = `Output a colored square concept image with the following text in the middle as a title: "${title}".
@@ -27,14 +27,20 @@ export const generateTitleImage = async (title: string, number: string, characte
 ${charInstruction}`;
 
   try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash-image',
-      contents: prompt,
-      config: {
-        imageConfig: {
-          aspectRatio: '1:1'
-        }
+    const model = ai.getGenerativeModel({
+      model: 'gemini-2.0-flash-exp',
+      generationConfig: {
+        responseModalities: 'image'
       }
+    });
+
+    const response = await model.generateContent({
+      contents: [{
+        role: 'user',
+        parts: [{
+          text: prompt
+        }]
+      }]
     });
 
     return getFirstImageFromResponse(response);
@@ -45,13 +51,13 @@ ${charInstruction}`;
 };
 
 export const generateComic = async (
-  concept: string, 
+  concept: string,
   characterDescription: string
 ): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-  const charInstruction = characterDescription 
-    ? `Main Character Appearance: ${characterDescription}. Ensure this character is the main figure.` 
+  const charInstruction = characterDescription
+    ? `Main Character Appearance: ${characterDescription}. Ensure this character is the main figure.`
     : "";
 
   const prompt = `Prompt for 4-Panel Comic Generation
@@ -63,10 +69,10 @@ Rules:
 • Output a square image (aspect ratio 1:1).
 • Use white (RGB 255, 255, 255) as the background color.
 • Visually represent all the content provided by your boss.
-• Show the exact sentences in the content provided from your boss as text (Speech bubble or narration) in the image. 
+• Show the exact sentences in the content provided from your boss as text (Speech bubble or narration) in the image.
 • One sentence represents one panel. Number each panels on the top left corner from 1 to 4 in order of the sentence.
 • Ensure the text and illustrations are scaled appropriately to fit neatly within each panel.
-• Use "CC Wild Words" as the default font. 
+• Use "CC Wild Words" as the default font.
 Illustration Guidelines:
 • Include illustrations that make the message easy to understand.
 • Create an image in a detailed japanese style anime aesthetic: expressive eyes, smooth cel-shaded coloring, and clean linework. Emphasize emotion and character presence, with a sense of motion or atmosphere typical of anime scenes.
@@ -83,14 +89,20 @@ Content from Your Boss:
 "${concept}"`;
 
   try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash-image',
-      contents: prompt,
-      config: {
-        imageConfig: {
-          aspectRatio: '1:1'
-        }
+    const model = ai.getGenerativeModel({
+      model: 'gemini-2.0-flash-exp',
+      generationConfig: {
+        responseModalities: 'image'
       }
+    });
+
+    const response = await model.generateContent({
+      contents: [{
+        role: 'user',
+        parts: [{
+          text: prompt
+        }]
+      }]
     });
 
     return getFirstImageFromResponse(response);
