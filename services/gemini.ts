@@ -14,7 +14,13 @@ const getFirstImageFromResponse = (response: any): string => {
 }
 
 export const generateTitleImage = async (title: string, number: string, characterDescription: string): Promise<string> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const apiKey = process.env.API_KEY;
+
+  if (!apiKey) {
+    throw new Error("API key not configured. Please set your GEMINI_API_KEY environment variable.");
+  }
+
+  const ai = new GoogleGenAI({ apiKey });
 
   const charInstruction = characterDescription
     ? `Feature this character in the illustration: ${characterDescription}`
@@ -30,7 +36,7 @@ ${charInstruction}`;
     const model = ai.getGenerativeModel({
       model: 'gemini-2.0-flash-exp',
       generationConfig: {
-        responseModalities: 'image'
+        responseModalities: ['Image']
       }
     });
 
@@ -44,9 +50,19 @@ ${charInstruction}`;
     });
 
     return getFirstImageFromResponse(response);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Title Generation Error:", error);
-    throw error;
+
+    // Provide more helpful error messages
+    if (error?.message?.includes('API key')) {
+      throw new Error("Invalid API key. Please check your Gemini API key configuration.");
+    } else if (error?.message?.includes('quota') || error?.message?.includes('limit')) {
+      throw new Error("API quota exceeded. Please check your billing or try again later.");
+    } else if (error?.message?.includes('safety') || error?.message?.includes('blocked')) {
+      throw new Error("Content was blocked by safety filters. Try modifying your prompt.");
+    }
+
+    throw new Error(error?.message || "Failed to generate title image. Please try again.");
   }
 };
 
@@ -54,7 +70,13 @@ export const generateComic = async (
   concept: string,
   characterDescription: string
 ): Promise<string> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const apiKey = process.env.API_KEY;
+
+  if (!apiKey) {
+    throw new Error("API key not configured. Please set your GEMINI_API_KEY environment variable.");
+  }
+
+  const ai = new GoogleGenAI({ apiKey });
 
   const charInstruction = characterDescription
     ? `Main Character Appearance: ${characterDescription}. Ensure this character is the main figure.`
@@ -92,7 +114,7 @@ Content from Your Boss:
     const model = ai.getGenerativeModel({
       model: 'gemini-2.0-flash-exp',
       generationConfig: {
-        responseModalities: 'image'
+        responseModalities: ['Image']
       }
     });
 
@@ -106,8 +128,18 @@ Content from Your Boss:
     });
 
     return getFirstImageFromResponse(response);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Comic Generation Error:", error);
-    throw error;
+
+    // Provide more helpful error messages
+    if (error?.message?.includes('API key')) {
+      throw new Error("Invalid API key. Please check your Gemini API key configuration.");
+    } else if (error?.message?.includes('quota') || error?.message?.includes('limit')) {
+      throw new Error("API quota exceeded. Please check your billing or try again later.");
+    } else if (error?.message?.includes('safety') || error?.message?.includes('blocked')) {
+      throw new Error("Content was blocked by safety filters. Try modifying your prompt.");
+    }
+
+    throw new Error(error?.message || "Failed to generate comic. Please try again.");
   }
 };
