@@ -17,7 +17,7 @@ import {
 // ============================================================================
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBsmSLwyS5DfR-PUdMIQ_NyZTbCkAG__IE",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: "daily-muse-c79e7.firebaseapp.com",
   projectId: "daily-muse-c79e7",
   storageBucket: "daily-muse-c79e7.firebasestorage.app",
