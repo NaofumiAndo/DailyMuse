@@ -33,8 +33,8 @@ const Admin: React.FC = () => {
   const [status, setStatus] = useState<GenerationStatus>(GenerationStatus.IDLE);
   const [scheduledDate, setScheduledDate] = useState('');
   const [dateError, setDateError] = useState('');
-  const [uploadError, setUploadError] = useState('');
-  
+  const [generationError, setGenerationError] = useState('');
+
   // Management List
   const [existingMuses, setExistingMuses] = useState<MuseEntry[]>([]);
 
@@ -113,13 +113,16 @@ const Admin: React.FC = () => {
 
   const handleGenerateTitle = async () => {
     if (!title || !episodeNumber) return;
+    setGenerationError('');
     setStatus(GenerationStatus.GENERATING_TITLE);
     try {
       const imageBytes = await generateTitleImage(title, episodeNumber, characterDesc);
       setGeneratedTitleImage(`data:image/jpeg;base64,${imageBytes}`);
       setStatus(GenerationStatus.IDLE);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to generate title", error);
+      const errorMessage = error?.message || error?.toString() || "Failed to generate title image. Please check your API key and try again.";
+      setGenerationError(errorMessage);
       setStatus(GenerationStatus.ERROR);
     }
   };
@@ -128,13 +131,16 @@ const Admin: React.FC = () => {
 
   const handleGenerateComic = async () => {
     if (!concept) return;
+    setGenerationError('');
     setStatus(GenerationStatus.GENERATING_COMIC);
     try {
       const imageBytes = await generateComic(concept, characterDesc);
       setGeneratedComicImage(`data:image/jpeg;base64,${imageBytes}`);
       setStatus(GenerationStatus.IDLE);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to generate comic", error);
+      const errorMessage = error?.message || error?.toString() || "Failed to generate comic. Please check your API key and try again.";
+      setGenerationError(errorMessage);
       setStatus(GenerationStatus.ERROR);
     }
   };
@@ -201,7 +207,7 @@ const Admin: React.FC = () => {
     setStatus(GenerationStatus.IDLE);
     setScheduledDate('');
     setDateError('');
-    setUploadError('');
+    setGenerationError('');
   };
 
   if (authLoading) {
@@ -280,19 +286,6 @@ const Admin: React.FC = () => {
          </div>
       )}
 
-      {status === GenerationStatus.ERROR && uploadError ? (
-         <div className="mb-8 p-6 bg-red-50 border border-red-200 rounded-sm">
-           <h3 className="text-red-800 font-bold mb-2">Upload Failed</h3>
-           <p className="text-red-700 text-sm mb-4">{uploadError}</p>
-           <button
-             onClick={() => {setStatus(GenerationStatus.IDLE); setUploadError('');}}
-             className="bg-red-600 text-white px-4 py-2 rounded-sm text-xs font-bold hover:bg-red-700"
-           >
-             Dismiss
-           </button>
-         </div>
-      ) : null}
-
       {status === GenerationStatus.COMPLETE ? (
          <div className="text-center py-20">
              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-green-50 text-green-700 mb-6"><CheckCircle2 className="w-10 h-10"/></div>
@@ -334,13 +327,19 @@ const Admin: React.FC = () => {
                         </div>
                       </div>
                       
-                      <button 
-                        onClick={handleGenerateTitle} 
+                      <button
+                        onClick={handleGenerateTitle}
                         disabled={status === GenerationStatus.GENERATING_TITLE || !title || !episodeNumber}
                         className="w-full bg-white border border-stone-900 text-stone-900 py-3 font-bold uppercase text-xs hover:bg-stone-50 flex items-center justify-center"
                       >
                          {status === GenerationStatus.GENERATING_TITLE ? <LoaderWrapper /> : <><ImageIcon className="w-4 h-4 mr-2"/> Generate Title Card</>}
                       </button>
+
+                      {generationError && currentStep === 0 && (
+                          <div className="bg-red-50 border border-red-200 p-4 rounded-sm">
+                              <p className="text-red-600 text-xs">{generationError}</p>
+                          </div>
+                      )}
 
                       {generatedTitleImage && (
                           <div className="mt-6 border-t border-stone-100 pt-4">
@@ -371,14 +370,20 @@ const Admin: React.FC = () => {
                         />
                     </div>
 
-                    <button 
+                    <button
                         onClick={handleGenerateComic}
                         disabled={status === GenerationStatus.GENERATING_COMIC || !concept}
                         className="w-full bg-stone-900 text-white py-3 font-bold uppercase text-xs hover:bg-stone-800 flex items-center justify-center"
                     >
                          {status === GenerationStatus.GENERATING_COMIC ? <LoaderWrapper /> : <><Wand2 className="w-4 h-4 mr-2"/> Generate 4-Panel Comic</>}
                     </button>
-                    
+
+                    {generationError && currentStep === 1 && (
+                        <div className="bg-red-50 border border-red-200 p-4 rounded-sm">
+                            <p className="text-red-600 text-xs">{generationError}</p>
+                        </div>
+                    )}
+
                     {generatedComicImage && (
                         <div className="mt-6 border-t border-stone-100 pt-4">
                              <button onClick={() => setCurrentStep(2)} className="w-full bg-stone-900 text-white py-3 font-bold uppercase text-xs hover:bg-stone-800 flex items-center justify-center">
