@@ -1,0 +1,15 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "muses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "scheduledDate",
+          "order": "DESCENDING"
+        }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
