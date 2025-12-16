@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { generateTitleImage, generateComic } from '../services/gemini';
-import { uploadMuseEntry, checkDateConflict, getAllEntries, deleteEntry, loginUser, logoutUser, subscribeToAuth } from '../services/firebase';
+import { uploadMuseEntry, checkDateConflict, getAllEntries, deleteEntry, updateEntryDate, loginUser, logoutUser, subscribeToAuth } from '../services/firebase';
 import { GenerationStatus, MuseEntry } from '../types';
-import { Wand2, CalendarCheck, CheckCircle2, Settings, X, ArrowRight, Image as ImageIcon, ChevronLeft, Loader2, LogOut } from 'lucide-react';
+import { Wand2, CalendarCheck, CheckCircle2, Settings, X, ArrowRight, Image as ImageIcon, ChevronLeft, Loader2, LogOut, Edit2, Save } from 'lucide-react';
 
 const Admin: React.FC = () => {
   // Auth & API
@@ -37,6 +37,11 @@ const Admin: React.FC = () => {
 
   // Management List
   const [existingMuses, setExistingMuses] = useState<MuseEntry[]>([]);
+
+  // Date Editing
+  const [editingDate, setEditingDate] = useState<string | null>(null);
+  const [newDate, setNewDate] = useState('');
+  const [editError, setEditError] = useState('');
 
   // Check Auth Status on Mount
   useEffect(() => {
@@ -170,6 +175,45 @@ const Admin: React.FC = () => {
     if (confirm("Delete this entry?")) {
       await deleteEntry(date);
       loadMuses();
+    }
+  };
+
+  const handleStartEdit = (date: string) => {
+    setEditingDate(date);
+    setNewDate(date);
+    setEditError('');
+  };
+
+  const handleCancelEdit = () => {
+    setEditingDate(null);
+    setNewDate('');
+    setEditError('');
+  };
+
+  const handleSaveDate = async (oldDate: string) => {
+    if (!newDate) {
+      setEditError('Please select a date');
+      return;
+    }
+
+    if (oldDate === newDate) {
+      handleCancelEdit();
+      return;
+    }
+
+    try {
+      const conflict = await checkDateConflict(newDate);
+      if (conflict) {
+        setEditError('A muse is already scheduled for this date');
+        return;
+      }
+
+      await updateEntryDate(oldDate, newDate);
+      await loadMuses();
+      handleCancelEdit();
+    } catch (error: any) {
+      console.error(error);
+      setEditError(error.message || 'Failed to update date');
     }
   };
 
@@ -444,17 +488,77 @@ const Admin: React.FC = () => {
       <div className="mt-20 pt-10 border-t border-stone-200">
           <h3 className="text-lg font-serif mb-6">Existing Schedules</h3>
           {existingMuses.map(m => (
-              <div key={m.scheduledDate} className="flex items-center justify-between py-3 border-b border-stone-100">
-                  <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-stone-100 overflow-hidden">
-                          <img src={m.titleImage || m.comicImage || (m as any).imageUrl} className="w-full h-full object-cover"/>
+              <div key={m.scheduledDate} className="py-3 border-b border-stone-100">
+                  {editingDate === m.scheduledDate ? (
+                      // Edit Mode
+                      <div className="space-y-2">
+                          <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 bg-stone-100 overflow-hidden flex-shrink-0">
+                                  <img src={m.titleImage || m.comicImage || (m as any).imageUrl} className="w-full h-full object-cover"/>
+                              </div>
+                              <div className="flex-grow">
+                                  <input
+                                      type="date"
+                                      value={newDate}
+                                      onChange={(e) => {
+                                          setNewDate(e.target.value);
+                                          setEditError('');
+                                      }}
+                                      className="w-full p-2 text-sm bg-white border border-stone-900 focus:border-stone-900 outline-none"
+                                  />
+                                  <p className="text-xs text-stone-500 mt-1">{m.title || 'Untitled'}</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                  <button
+                                      onClick={() => handleSaveDate(m.scheduledDate)}
+                                      className="p-2 text-green-600 hover:bg-green-50 rounded"
+                                      title="Save"
+                                  >
+                                      <Save className="w-4 h-4"/>
+                                  </button>
+                                  <button
+                                      onClick={handleCancelEdit}
+                                      className="p-2 text-stone-400 hover:bg-stone-50 rounded"
+                                      title="Cancel"
+                                  >
+                                      <X className="w-4 h-4"/>
+                                  </button>
+                              </div>
+                          </div>
+                          {editError && (
+                              <p className="text-red-500 text-xs pl-16">{editError}</p>
+                          )}
                       </div>
-                      <div>
-                          <p className="text-sm font-bold">{m.scheduledDate}</p>
-                          <p className="text-xs text-stone-500">{m.title || 'Untitled'}</p>
+                  ) : (
+                      // View Mode
+                      <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 bg-stone-100 overflow-hidden">
+                                  <img src={m.titleImage || m.comicImage || (m as any).imageUrl} className="w-full h-full object-cover"/>
+                              </div>
+                              <div>
+                                  <p className="text-sm font-bold">{m.scheduledDate}</p>
+                                  <p className="text-xs text-stone-500">{m.title || 'Untitled'}</p>
+                              </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                              <button
+                                  onClick={() => handleStartEdit(m.scheduledDate)}
+                                  className="text-stone-400 hover:text-stone-900 p-1"
+                                  title="Edit date"
+                              >
+                                  <Edit2 className="w-4 h-4"/>
+                              </button>
+                              <button
+                                  onClick={() => handleDelete(m.scheduledDate)}
+                                  className="text-stone-400 hover:text-red-500 p-1"
+                                  title="Delete"
+                              >
+                                  <X className="w-4 h-4"/>
+                              </button>
+                          </div>
                       </div>
-                  </div>
-                  <button onClick={() => handleDelete(m.scheduledDate)} className="text-stone-400 hover:text-red-500"><X className="w-4 h-4"/></button>
+                  )}
               </div>
           ))}
       </div>
