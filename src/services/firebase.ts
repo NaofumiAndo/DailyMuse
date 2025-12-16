@@ -1,12 +1,15 @@
 import { MuseEntry } from '../types';
 import { initializeApp } from "firebase/app";
-import { 
-  getFirestore, collection, query, where, getDocs, 
-  setDoc, doc, orderBy, deleteDoc, getDoc 
+import {
+  getFirestore, collection, query, where, getDocs,
+  setDoc, doc, orderBy, deleteDoc, getDoc
 } from "firebase/firestore";
-import { 
-  getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, User 
+import {
+  getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, User
 } from "firebase/auth";
+import {
+  getStorage, ref, uploadBytes, getDownloadURL, deleteObject
+} from "firebase/storage";
 
 // ============================================================================
 // 🌍 REAL WORLD IMPLEMENTATION
@@ -26,6 +29,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
 export const auth = getAuth(app);
+export const storage = getStorage(app);
 
 const COLLECTION_NAME = 'muses';
 
@@ -41,6 +45,77 @@ export const logoutUser = () => {
 
 export const subscribeToAuth = (callback: (user: User | null) => void) => {
   return onAuthStateChanged(auth, callback);
+};
+
+// --- STORAGE SERVICES ---
+
+/**
+ * Converts base64 string to Blob for uploading
+ */
+const base64ToBlob = (base64: string): Blob => {
+  // Extract the base64 data (remove data:image/jpeg;base64, prefix if present)
+  const base64Data = base64.includes(',') ? base64.split(',')[1] : base64;
+  const byteCharacters = atob(base64Data);
+  const byteNumbers = new Array(byteCharacters.length);
+
+  for (let i = 0; i < byteCharacters.length; i++) {
+    byteNumbers[i] = byteCharacters.charCodeAt(i);
+  }
+
+  const byteArray = new Uint8Array(byteNumbers);
+  return new Blob([byteArray], { type: 'image/jpeg' });
+};
+
+/**
+ * Uploads a base64 image to Firebase Storage and returns the download URL
+ */
+export const uploadImageToStorage = async (
+  base64Image: string,
+  path: string
+): Promise<string> => {
+  try {
+    const blob = base64ToBlob(base64Image);
+    const storageRef = ref(storage, path);
+
+    await uploadBytes(storageRef, blob);
+    const downloadURL = await getDownloadURL(storageRef);
+
+    return downloadURL;
+  } catch (error) {
+    console.error("Error uploading image to storage:", error);
+    throw error;
+  }
+};
+
+/**
+ * Deletes an image from Firebase Storage by its path
+ */
+export const deleteImageFromStorage = async (path: string): Promise<void> => {
+  try {
+    const storageRef = ref(storage, path);
+    await deleteObject(storageRef);
+  } catch (error) {
+    console.error("Error deleting image from storage:", error);
+    // Don't throw - image might already be deleted
+  }
+};
+
+/**
+ * Extracts the storage path from a Firebase Storage URL
+ */
+const getStoragePathFromUrl = (url: string): string | null => {
+  try {
+    // Firebase Storage URLs have format:
+    // https://firebasestorage.googleapis.com/v0/b/bucket/o/path%2Fto%2Ffile.jpg?...
+    const match = url.match(/\/o\/(.+?)\?/);
+    if (match && match[1]) {
+      return decodeURIComponent(match[1]);
+    }
+    return null;
+  } catch (error) {
+    console.error("Error extracting storage path from URL:", error);
+    return null;
+  }
 };
 
 // --- DATA SERVICES ---
@@ -97,10 +172,30 @@ export const checkDateConflict = async (dateStr: string): Promise<boolean> => {
 
 export const uploadMuseEntry = async (entry: MuseEntry): Promise<void> => {
   try {
+    // Upload images to Storage if they are base64 (start with data:image)
+    let titleImageUrl = entry.titleImage;
+    let comicImageUrl = entry.comicImage;
+
+    const timestamp = Date.now();
+
+    // Upload title image if it's base64
+    if (entry.titleImage.startsWith('data:image')) {
+      const titlePath = `muses/${entry.scheduledDate}/title_${timestamp}.jpg`;
+      titleImageUrl = await uploadImageToStorage(entry.titleImage, titlePath);
+    }
+
+    // Upload comic image if it's base64
+    if (entry.comicImage.startsWith('data:image')) {
+      const comicPath = `muses/${entry.scheduledDate}/comic_${timestamp}.jpg`;
+      comicImageUrl = await uploadImageToStorage(entry.comicImage, comicPath);
+    }
+
     // We use the scheduledDate as the document ID to ensure easy uniqueness
     // and simplified fetching by date.
     await setDoc(doc(db, COLLECTION_NAME, entry.scheduledDate), {
       ...entry,
+      titleImage: titleImageUrl,
+      comicImage: comicImageUrl,
       id: entry.scheduledDate
     });
   } catch (error) {
@@ -127,6 +222,27 @@ export const updateEntryDate = async (oldDate: string, newDate: string): Promise
 
 export const deleteEntry = async (date: string): Promise<void> => {
   try {
+    // Get the entry to find image paths
+    const entry = await getEntryByDate(date);
+
+    // Delete images from Storage if they exist
+    if (entry) {
+      // Only delete if images are Storage URLs (not base64)
+      if (entry.titleImage && entry.titleImage.includes('firebasestorage')) {
+        const titlePath = getStoragePathFromUrl(entry.titleImage);
+        if (titlePath) {
+          await deleteImageFromStorage(titlePath);
+        }
+      }
+      if (entry.comicImage && entry.comicImage.includes('firebasestorage')) {
+        const comicPath = getStoragePathFromUrl(entry.comicImage);
+        if (comicPath) {
+          await deleteImageFromStorage(comicPath);
+        }
+      }
+    }
+
+    // Delete the Firestore document
     await deleteDoc(doc(db, COLLECTION_NAME, date));
   } catch (error) {
     console.error("Error deleting entry:", error);
