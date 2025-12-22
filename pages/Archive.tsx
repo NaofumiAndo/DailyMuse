@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getPastEntries } from '../services/firebase';
+import { getPastEntries } from '../services/githubStorage';
 import { MuseEntry } from '../types';
 import { Loader2 } from 'lucide-react';
 
