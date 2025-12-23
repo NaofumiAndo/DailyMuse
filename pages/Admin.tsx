@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { generateTitleImage, generateComic } from '../services/gemini';
-import { uploadMuseEntry, checkDateConflict, getAllEntries, deleteEntry, loginUser, logoutUser, subscribeToAuth } from '../services/firebase';
+import { loginUser, logoutUser, subscribeToAuth } from '../services/firebase';
+import { saveMuseEntry, checkDateConflict, getAllEntries, deleteMuseEntry, updateEntryDate } from '../services/githubStorage';
 import { GenerationStatus, MuseEntry } from '../types';
-import { Wand2, CalendarCheck, CheckCircle2, Settings, X, ArrowRight, Image as ImageIcon, ChevronLeft, Loader2, LogOut } from 'lucide-react';
+import { Wand2, CalendarCheck, CheckCircle2, Settings, X, ArrowRight, Image as ImageIcon, ChevronLeft, Loader2, LogOut, Edit2, Save } from 'lucide-react';
 
 const Admin: React.FC = () => {
   // Auth & API
@@ -160,7 +161,7 @@ const Admin: React.FC = () => {
     setUploadError('');
 
     try {
-      await uploadMuseEntry({
+      await saveMuseEntry({
         scheduledDate,
         createdAt: Date.now(),
         title,
@@ -179,9 +180,7 @@ const Admin: React.FC = () => {
       setStatus(GenerationStatus.ERROR);
 
       // Set user-friendly error message
-      if (e.message && e.message.includes('Storage rules')) {
-        setUploadError('Firebase Storage access denied. Please update your storage rules to allow public read. Check the browser console for details.');
-      } else if (e.message) {
+      if (e.message) {
         setUploadError(e.message);
       } else {
         setUploadError('Upload failed. Please check the browser console for details.');
@@ -191,7 +190,7 @@ const Admin: React.FC = () => {
 
   const handleDelete = async (date: string) => {
     if (confirm("Delete this entry?")) {
-      await deleteEntry(date);
+      await deleteMuseEntry(date);
       loadMuses();
     }
   };

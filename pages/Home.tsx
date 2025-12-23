@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getEntryByDate } from '../services/firebase';
+import { getEntryByDate } from '../services/githubStorage';
 import { MuseEntry } from '../types';
 import { ArrowRight, Loader2 } from 'lucide-react';
 
