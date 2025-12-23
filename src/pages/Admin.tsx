@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { generateTitleImage, generateComic } from '../services/gemini';
-import { loginUser, logoutUser, subscribeToAuth } from '../services/firebase';
 import { saveMuseEntry, checkDateConflict, getAllEntries, deleteMuseEntry, updateEntryDate } from '../services/githubStorage';
 import { GenerationStatus, MuseEntry } from '../types';
 import { Wand2, CalendarCheck, CheckCircle2, Settings, X, ArrowRight, Image as ImageIcon, ChevronLeft, Loader2, LogOut, Edit2, Save } from 'lucide-react';
+
+// Simple password authentication
+const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || 'admin123';
 
 const Admin: React.FC = () => {
   // Auth & API
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
-  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
   
@@ -46,11 +47,10 @@ const Admin: React.FC = () => {
 
   // Check Auth Status on Mount
   useEffect(() => {
-    const unsubscribe = subscribeToAuth((user) => {
-      setIsAuthenticated(!!user);
-      setAuthLoading(false);
-    });
-    return () => unsubscribe();
+    // Check if user is already logged in (from localStorage)
+    const isLoggedIn = localStorage.getItem('dailyMuse_isAuthenticated') === 'true';
+    setIsAuthenticated(isLoggedIn);
+    setAuthLoading(false);
   }, []);
 
   useEffect(() => {
@@ -87,20 +87,22 @@ const Admin: React.FC = () => {
     }
   };
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError('');
-    try {
-      await loginUser(email, password);
-      // Auth state listener will update isAuthenticated
-    } catch (error: any) {
-      console.error(error);
-      setLoginError("Invalid email or password.");
+
+    if (password === ADMIN_PASSWORD) {
+      setIsAuthenticated(true);
+      localStorage.setItem('dailyMuse_isAuthenticated', 'true');
+      setPassword('');
+    } else {
+      setLoginError('Incorrect password. Please try again.');
     }
   };
 
-  const handleLogout = async () => {
-    await logoutUser();
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    localStorage.removeItem('dailyMuse_isAuthenticated');
   };
 
   // --- STEP 0: TITLE ---
@@ -244,24 +246,18 @@ const Admin: React.FC = () => {
       <div className="min-h-[70vh] flex items-center justify-center px-4">
         <form onSubmit={handleLogin} className="w-full max-w-sm bg-white p-10 rounded-sm shadow-xl shadow-stone-200 border border-stone-100">
             <h2 className="text-3xl font-serif text-center mb-6 text-stone-900">Creator Access</h2>
-            
+
             <div className="space-y-4 mb-8">
-              <input 
-                type="email" 
-                value={email} 
-                onChange={(e) => setEmail(e.target.value)} 
-                placeholder="Admin Email" 
-                className="w-full p-4 bg-stone-50 border-b-2 border-stone-200 focus:border-stone-900 outline-none text-sm" 
-              />
-              <input 
-                type="password" 
-                value={password} 
-                onChange={(e) => setPassword(e.target.value)} 
-                placeholder="Password" 
-                className="w-full p-4 bg-stone-50 border-b-2 border-stone-200 focus:border-stone-900 outline-none text-sm" 
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter Password"
+                className="w-full p-4 bg-stone-50 border-b-2 border-stone-200 focus:border-stone-900 outline-none text-sm"
+                autoFocus
               />
             </div>
-            
+
             {loginError && <p className="text-red-500 text-xs text-center mb-4">{loginError}</p>}
 
             <button type="submit" className="w-full bg-stone-900 text-white py-4 rounded-sm font-bold tracking-widest uppercase text-xs hover:bg-stone-800 transition-colors">Enter Studio</button>
