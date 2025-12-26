@@ -2,28 +2,81 @@
 <img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
 </div>
 
-# Run and deploy your AI Studio app
+# Daily Muse - AI Comic Generator
 
-This contains everything you need to run your app locally.
+A creative web app for generating and publishing daily AI-generated comics using Google's Gemini AI.
 
-View your app in AI Studio: https://ai.studio/apps/drive/1ZDGZNDu6J-FGOjA5r7hZHJ2VOPcs_Jr8
+## Features
+
+- **Creator Studio**: Generate title cards and 4-panel comics with AI
+- **Static Hosting**: Images and metadata stored in GitHub, served via GitHub Pages
+- **No Cloud Database**: All data is stored as static files in the repository
+- **Secure Workflow**: Creator panel runs locally, public site is read-only
 
 ## Run Locally
 
-**Prerequisites:**  Node.js
-
+**Prerequisites:** Node.js
 
 1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. **Important**: Configure Firebase Storage rules for public image access
-   - See [FIREBASE_STORAGE_SETUP.md](FIREBASE_STORAGE_SETUP.md) for detailed instructions
-   - This is required for images to be visible to all users
-4. Run the app:
-   `npm run dev`
+   ```bash
+   npm install
+   ```
 
-## Firebase Storage Setup
+2. Create a `.env` file with your configuration:
+   ```bash
+   # Copy the example file
+   cp .env.example .env
+   ```
 
-If images aren't appearing after upload or aren't visible to other users, you need to update your Firebase Storage security rules.
+3. Edit `.env` and set your values:
+   ```
+   VITE_ADMIN_PASSWORD=your-secure-password-here
+   ```
 
-See the detailed guide: [FIREBASE_STORAGE_SETUP.md](FIREBASE_STORAGE_SETUP.md)
+4. Run both the backend server and frontend:
+   ```bash
+   npm run dev:all
+   ```
+
+   Or run them separately:
+   ```bash
+   # Terminal 1: Backend server
+   npm run server
+
+   # Terminal 2: Frontend dev server
+   npm run dev
+   ```
+
+## How It Works
+
+1. **Creator Workflow** (Local Only):
+   - Run the app locally with `npm run dev:all`
+   - Login to the Creator panel at `/admin`
+   - Generate images using Gemini AI
+   - Images are saved to `public/data/muses/` directory
+   - Commit and push changes to GitHub
+
+2. **Public Website** (GitHub Pages):
+   - GitHub Pages serves the static files
+   - Users see comics on the "Today" and "Archive" pages
+   - No authentication required for viewing
+
+## Deployment
+
+The site is deployed on GitHub Pages. To update:
+
+1. Generate new comics locally
+2. Commit the generated files in `public/data/muses/`
+3. Push to GitHub:
+   ```bash
+   git add public/data/muses/
+   git commit -m "Add new comic for YYYY-MM-DD"
+   git push
+   ```
+
+## Security Notes
+
+- The `.env` file is gitignored and should NEVER be committed
+- Keep your admin password secure and local
+- The Creator panel should only be accessed locally
+- The deployed site on GitHub Pages is read-only
