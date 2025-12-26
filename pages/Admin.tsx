@@ -36,6 +36,7 @@ const Admin: React.FC = () => {
   const [scheduledDate, setScheduledDate] = useState('');
   const [dateError, setDateError] = useState('');
   const [generationError, setGenerationError] = useState('');
+  const [uploadError, setUploadError] = useState('');
 
   // Management List
   const [existingMuses, setExistingMuses] = useState<MuseEntry[]>([]);
@@ -385,8 +386,8 @@ const Admin: React.FC = () => {
 
                       <div className="bg-stone-50 p-5 border border-stone-200">
                           <label className="block text-xs font-bold text-stone-400 uppercase tracking-wider mb-2">Schedule Date</label>
-                          <input 
-                              type="date" 
+                          <input
+                              type="date"
                               value={scheduledDate}
                               onChange={(e) => {
                                   setScheduledDate(e.target.value);
@@ -395,7 +396,8 @@ const Admin: React.FC = () => {
                               className="w-full p-3 bg-white border border-stone-200 focus:border-stone-900 outline-none mb-2"
                           />
                           {dateError && <p className="text-red-500 text-xs mb-3">{dateError}</p>}
-                          <button 
+                          {uploadError && <p className="text-red-500 text-xs mb-3">{uploadError}</p>}
+                          <button
                               onClick={handleSchedule}
                               disabled={!scheduledDate || status === GenerationStatus.UPLOADING}
                               className="w-full bg-stone-900 text-white py-3 font-bold uppercase text-xs hover:bg-stone-800 flex items-center justify-center"
