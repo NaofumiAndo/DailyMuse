@@ -33,14 +33,11 @@ export const generateTitleImage = async (title: string, number: string, characte
 ${charInstruction}`;
 
   try {
-    const model = ai.getGenerativeModel({
+    const response = await ai.models.generateContent({
       model: 'gemini-2.0-flash-exp',
       generationConfig: {
         responseModalities: ['Image']
-      }
-    });
-
-    const response = await model.generateContent({
+      },
       contents: [{
         role: 'user',
         parts: [{
@@ -111,14 +108,11 @@ Content from Your Boss:
 "${concept}"`;
 
   try {
-    const model = ai.getGenerativeModel({
+    const response = await ai.models.generateContent({
       model: 'gemini-2.0-flash-exp',
       generationConfig: {
         responseModalities: ['Image']
-      }
-    });
-
-    const response = await model.generateContent({
+      },
       contents: [{
         role: 'user',
         parts: [{
