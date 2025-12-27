@@ -148,7 +148,7 @@ const Admin: React.FC = () => {
 
     const conflict = await checkDateConflict(scheduledDate);
     if (conflict) {
-      setDateError('A muse is already scheduled for this date.');
+      setDateError('❌ A comic is already scheduled for this date. Please choose a different date.');
       return;
     }
 
@@ -175,9 +175,18 @@ const Admin: React.FC = () => {
   };
 
   const handleDelete = async (date: string) => {
-    if (confirm("Delete this entry?")) {
-      await deleteMuseEntry(date);
-      loadMuses();
+    const entry = existingMuses.find(m => m.scheduledDate === date);
+    const title = entry?.title || 'Untitled';
+
+    if (confirm(`Are you sure you want to delete the comic "${title}" scheduled for ${date}?\n\nThis action cannot be undone.`)) {
+      try {
+        await deleteMuseEntry(date);
+        await loadMuses();
+        alert(`✅ Successfully deleted comic for ${date}`);
+      } catch (error) {
+        alert(`❌ Failed to delete comic: ${error}`);
+        console.error('Delete error:', error);
+      }
     }
   };
 
@@ -207,13 +216,14 @@ const Admin: React.FC = () => {
     try {
       const conflict = await checkDateConflict(newDate);
       if (conflict) {
-        setEditError('A muse is already scheduled for this date');
+        setEditError('❌ A comic is already scheduled for this date. Please choose a different date.');
         return;
       }
 
       await updateEntryDate(oldDate, newDate);
       await loadMuses();
       handleCancelEdit();
+      alert(`✅ Successfully changed date from ${oldDate} to ${newDate}`);
     } catch (error: any) {
       console.error(error);
       setEditError(error.message || 'Failed to update date');
@@ -481,10 +491,26 @@ const Admin: React.FC = () => {
         </div>
       )}
 
-      {/* Legacy Management Table */}
+      {/* Post Management Section */}
       <div className="mt-20 pt-10 border-t border-stone-200">
-          <h3 className="text-lg font-serif mb-6">Existing Schedules</h3>
-          {existingMuses.map(m => (
+          <div className="flex items-center justify-between mb-6">
+              <div>
+                  <h3 className="text-lg font-serif font-bold text-stone-900">Published Comics</h3>
+                  <p className="text-xs text-stone-500 mt-1">Manage your scheduled and published entries</p>
+              </div>
+              <div className="text-xs text-stone-400 font-mono">
+                  {existingMuses.length} {existingMuses.length === 1 ? 'entry' : 'entries'}
+              </div>
+          </div>
+
+          {existingMuses.length === 0 ? (
+              <div className="text-center py-12 bg-stone-50 border border-stone-200 rounded-sm">
+                  <p className="text-stone-400 text-sm font-serif italic">No comics published yet</p>
+                  <p className="text-stone-500 text-xs mt-2">Create your first comic above to get started</p>
+              </div>
+          ) : (
+              <div className="space-y-2">
+                  {existingMuses.map(m => (
               <div key={m.scheduledDate} className="py-3 border-b border-stone-100">
                   {editingDate === m.scheduledDate ? (
                       // Edit Mode
@@ -528,36 +554,40 @@ const Admin: React.FC = () => {
                       </div>
                   ) : (
                       // View Mode
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between group hover:bg-stone-50 px-3 py-2 rounded-sm transition-colors">
                           <div className="flex items-center gap-4">
-                              <div className="w-12 h-12 bg-stone-100 overflow-hidden">
+                              <div className="w-12 h-12 bg-stone-100 overflow-hidden rounded border border-stone-200">
                                   <img src={m.titleImage || m.comicImage || (m as any).imageUrl} className="w-full h-full object-cover"/>
                               </div>
                               <div>
-                                  <p className="text-sm font-bold">{m.scheduledDate}</p>
+                                  <p className="text-sm font-bold text-stone-900">{m.scheduledDate}</p>
                                   <p className="text-xs text-stone-500">{m.title || 'Untitled'}</p>
                               </div>
                           </div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                               <button
                                   onClick={() => handleStartEdit(m.scheduledDate)}
-                                  className="text-stone-400 hover:text-stone-900 p-1"
-                                  title="Edit date"
+                                  className="px-3 py-2 text-stone-600 hover:text-stone-900 hover:bg-white border border-transparent hover:border-stone-200 rounded text-xs font-medium transition-all"
+                                  title="Change date"
                               >
-                                  <Edit2 className="w-4 h-4"/>
+                                  <Edit2 className="w-3.5 h-3.5 inline mr-1.5"/>
+                                  Change Date
                               </button>
                               <button
                                   onClick={() => handleDelete(m.scheduledDate)}
-                                  className="text-stone-400 hover:text-red-500 p-1"
-                                  title="Delete"
+                                  className="px-3 py-2 text-red-500 hover:text-red-600 hover:bg-red-50 border border-transparent hover:border-red-200 rounded text-xs font-medium transition-all"
+                                  title="Delete entry"
                               >
-                                  <X className="w-4 h-4"/>
+                                  <X className="w-3.5 h-3.5 inline mr-1.5"/>
+                                  Delete
                               </button>
                           </div>
                       </div>
                   )}
               </div>
-          ))}
+                  ))}
+              </div>
+          )}
       </div>
 
     </div>
