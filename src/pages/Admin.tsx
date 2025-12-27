@@ -554,7 +554,7 @@ const Admin: React.FC = () => {
                       </div>
                   ) : (
                       // View Mode
-                      <div className="flex items-center justify-between group hover:bg-stone-50 px-3 py-2 rounded-sm transition-colors">
+                      <div className="flex items-center justify-between hover:bg-stone-50 px-3 py-2 rounded-sm transition-colors">
                           <div className="flex items-center gap-4">
                               <div className="w-12 h-12 bg-stone-100 overflow-hidden rounded border border-stone-200">
                                   <img src={m.titleImage || m.comicImage || (m as any).imageUrl} className="w-full h-full object-cover"/>
@@ -564,21 +564,21 @@ const Admin: React.FC = () => {
                                   <p className="text-xs text-stone-500">{m.title || 'Untitled'}</p>
                               </div>
                           </div>
-                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="flex items-center gap-2">
                               <button
                                   onClick={() => handleStartEdit(m.scheduledDate)}
-                                  className="px-3 py-2 text-stone-600 hover:text-stone-900 hover:bg-white border border-transparent hover:border-stone-200 rounded text-xs font-medium transition-all"
+                                  className="px-3 py-2 text-stone-600 hover:text-stone-900 bg-white hover:bg-stone-50 border border-stone-200 hover:border-stone-300 rounded text-xs font-medium transition-all"
                                   title="Change date"
                               >
-                                  <Edit2 className="w-3.5 h-3.5 inline mr-1.5"/>
-                                  Change Date
+                                  <Edit2 className="w-3.5 h-3.5 inline mr-1"/>
+                                  Edit Date
                               </button>
                               <button
                                   onClick={() => handleDelete(m.scheduledDate)}
-                                  className="px-3 py-2 text-red-500 hover:text-red-600 hover:bg-red-50 border border-transparent hover:border-red-200 rounded text-xs font-medium transition-all"
+                                  className="px-3 py-2 text-white bg-red-500 hover:bg-red-600 border border-red-500 hover:border-red-600 rounded text-xs font-medium transition-all"
                                   title="Delete entry"
                               >
-                                  <X className="w-3.5 h-3.5 inline mr-1.5"/>
+                                  <X className="w-3.5 h-3.5 inline mr-1"/>
                                   Delete
                               </button>
                           </div>
