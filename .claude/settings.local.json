@@ -6,7 +6,10 @@
       "Bash(findstr:*)",
       "Bash(node test-gemini-api.js:*)",
       "WebSearch",
-      "Bash(node test-api.js:*)"
+      "Bash(node test-api.js:*)",
+      "Bash(cat:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ]
   }
 }
