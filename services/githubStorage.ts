@@ -6,7 +6,9 @@ import { MuseEntry } from '../types';
  * instead of using cloud databases
  */
 
-const DATA_DIR = '/data/muses';
+// Get the base path from Vite config (e.g., '/DailyMuse/' for GitHub Pages)
+const BASE_PATH = import.meta.env.BASE_URL || '/';
+const DATA_DIR = `${BASE_PATH}data/muses`.replace(/\/+/g, '/');
 
 /**
  * Converts base64 string to blob URL for downloading
