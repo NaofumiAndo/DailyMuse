@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/genai";
 
 const getFirstImageFromResponse = (response: any): string => {
   const candidates = response.candidates;
@@ -20,7 +20,7 @@ export const generateTitleImage = async (title: string, number: string, characte
     throw new Error("API key not configured. Please set your GEMINI_API_KEY environment variable.");
   }
 
-  const ai = new GoogleGenAI({ apiKey });
+  const ai = new GoogleGenerativeAI(apiKey);
 
   const charInstruction = characterDescription
     ? `Feature this character in the illustration: ${characterDescription}`
@@ -76,7 +76,7 @@ export const generateComic = async (
     throw new Error("API key not configured. Please set your GEMINI_API_KEY environment variable.");
   }
 
-  const ai = new GoogleGenAI({ apiKey });
+  const ai = new GoogleGenerativeAI(apiKey);
 
   const charInstruction = characterDescription
     ? `Main Character Appearance: ${characterDescription}. Ensure this character is the main figure.`
