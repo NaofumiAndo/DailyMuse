@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Modality } from "@google/genai";
 
 const getFirstImageFromResponse = (response: any): string => {
   const candidates = response.candidates;
@@ -14,7 +14,7 @@ const getFirstImageFromResponse = (response: any): string => {
 }
 
 export const generateTitleImage = async (title: string, number: string, characterDescription: string): Promise<string> => {
-  const apiKey = process.env.API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
 
   if (!apiKey) {
     throw new Error("API key not configured. Please set your GEMINI_API_KEY environment variable.");
@@ -33,20 +33,15 @@ export const generateTitleImage = async (title: string, number: string, characte
 ${charInstruction}`;
 
   try {
-    const model = ai.getGenerativeModel({
-      model: 'gemini-2.0-flash-exp',
-      generationConfig: {
-        responseModalities: ['Image']
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash-image',
+      contents: prompt,
+      config: {
+        responseModalities: [Modality.IMAGE],
+        imageConfig: {
+          aspectRatio: "1:1"
+        }
       }
-    });
-
-    const response = await model.generateContent({
-      contents: [{
-        role: 'user',
-        parts: [{
-          text: prompt
-        }]
-      }]
     });
 
     return getFirstImageFromResponse(response);
@@ -70,7 +65,7 @@ export const generateComic = async (
   concept: string,
   characterDescription: string
 ): Promise<string> => {
-  const apiKey = process.env.API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
 
   if (!apiKey) {
     throw new Error("API key not configured. Please set your GEMINI_API_KEY environment variable.");
@@ -111,20 +106,15 @@ Content from Your Boss:
 "${concept}"`;
 
   try {
-    const model = ai.getGenerativeModel({
-      model: 'gemini-2.0-flash-exp',
-      generationConfig: {
-        responseModalities: ['Image']
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash-image',
+      contents: prompt,
+      config: {
+        responseModalities: [Modality.IMAGE],
+        imageConfig: {
+          aspectRatio: "1:1"
+        }
       }
-    });
-
-    const response = await model.generateContent({
-      contents: [{
-        role: 'user',
-        parts: [{
-          text: prompt
-        }]
-      }]
     });
 
     return getFirstImageFromResponse(response);
