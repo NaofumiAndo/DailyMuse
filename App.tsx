@@ -1,19 +1,18 @@
 import React, { useState } from 'react';
 import { HashRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
-import Home from './pages/Home';
-import Archive from './pages/Archive';
-import Admin from './pages/Admin';
+import ComicSection from './pages/ComicSection';
 import StoryAtlas from './pages/StoryAtlas';
 import { Menu, X } from 'lucide-react';
 
 const Sidebar: React.FC = () => {
   const location = useLocation();
 
+  const isComicSection = ['/', '/archive', '/admin'].includes(location.pathname);
+  const isStorySection = location.pathname === '/story-atlas';
+
   const navLinks = [
-    { path: '/', label: 'Today', icon: '📅' },
-    { path: '/archive', label: 'Archive', icon: '📚' },
-    { path: '/story-atlas', label: 'Story: Atlas', icon: '📖' },
-    { path: '/admin', label: 'Creator', icon: '✨' },
+    { path: '/', label: '4-Panel Comic', icon: '🎨', isActive: isComicSection },
+    { path: '/story-atlas', label: 'Story: Atlas', icon: '📖', isActive: isStorySection },
   ];
 
   return (
@@ -33,7 +32,7 @@ const Sidebar: React.FC = () => {
               <Link
                 to={link.path}
                 className={`flex items-center gap-3 px-4 py-3 rounded-sm transition-all ${
-                  location.pathname === link.path
+                  link.isActive
                     ? 'bg-stone-900 text-white'
                     : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
                 }`}
@@ -59,10 +58,8 @@ const Navigation: React.FC = () => {
   const location = useLocation();
 
   const navLinks = [
-    { path: '/', label: 'Today' },
-    { path: '/archive', label: 'Archive' },
+    { path: '/', label: '4-Panel Comic' },
     { path: '/story-atlas', label: 'Story: Atlas' },
-    { path: '/admin', label: 'Creator' },
   ];
 
   return (
@@ -108,7 +105,7 @@ const Navigation: React.FC = () => {
 
       {/* Mobile Menu */}
       {isOpen && (
-        <div className="sm:hidden bg-stone-50 border-b border-stone-200 animate-in slide-in-from-top-2">
+        <div className="md:hidden bg-stone-50 border-b border-stone-200 animate-in slide-in-from-top-2">
           <div className="pt-4 pb-6 space-y-2 px-4">
             {navLinks.map((link) => (
               <Link
@@ -158,10 +155,8 @@ export default function App() {
 
           <main className="flex-grow pt-20 md:pt-0">
             <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/archive" element={<Archive />} />
+              <Route path="/*" element={<ComicSection />} />
               <Route path="/story-atlas" element={<StoryAtlas />} />
-              <Route path="/admin" element={<Admin />} />
             </Routes>
           </main>
 
