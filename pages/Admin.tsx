@@ -36,10 +36,14 @@ const Admin: React.FC = () => {
   const [scheduledDate, setScheduledDate] = useState('');
   const [dateError, setDateError] = useState('');
   const [generationError, setGenerationError] = useState('');
-  const [uploadError, setUploadError] = useState('');
 
   // Management List
   const [existingMuses, setExistingMuses] = useState<MuseEntry[]>([]);
+
+  // Date Editing
+  const [editingDate, setEditingDate] = useState<string | null>(null);
+  const [newDate, setNewDate] = useState('');
+  const [editError, setEditError] = useState('');
 
   // Check Auth Status on Mount
   useEffect(() => {
@@ -144,12 +148,11 @@ const Admin: React.FC = () => {
 
     const conflict = await checkDateConflict(scheduledDate);
     if (conflict) {
-      setDateError('A muse is already scheduled for this date.');
+      setDateError('❌ A comic is already scheduled for this date. Please choose a different date.');
       return;
     }
 
     setStatus(GenerationStatus.UPLOADING);
-    setUploadError('');
 
     try {
       await saveMuseEntry({
@@ -164,25 +167,67 @@ const Admin: React.FC = () => {
       });
 
       setStatus(GenerationStatus.COMPLETE);
-      setUploadError('');
       loadMuses();
-    } catch (e: any) {
-      console.error('Upload failed:', e);
+    } catch (e) {
+      console.error(e);
       setStatus(GenerationStatus.ERROR);
-
-      // Set user-friendly error message
-      if (e.message) {
-        setUploadError(e.message);
-      } else {
-        setUploadError('Upload failed. Please check the browser console for details.');
-      }
     }
   };
 
   const handleDelete = async (date: string) => {
-    if (confirm("Delete this entry?")) {
-      await deleteMuseEntry(date);
-      loadMuses();
+    const entry = existingMuses.find(m => m.scheduledDate === date);
+    const title = entry?.title || 'Untitled';
+
+    if (confirm(`Are you sure you want to delete the comic "${title}" scheduled for ${date}?\n\nThis action cannot be undone.`)) {
+      try {
+        await deleteMuseEntry(date);
+        await loadMuses();
+        alert(`✅ Successfully deleted comic for ${date}`);
+      } catch (error) {
+        alert(`❌ Failed to delete comic: ${error}`);
+        console.error('Delete error:', error);
+      }
+    }
+  };
+
+  const handleStartEdit = (date: string) => {
+    console.log('Starting edit for date:', date);
+    setEditingDate(date);
+    setNewDate(date);
+    setEditError('');
+  };
+
+  const handleCancelEdit = () => {
+    setEditingDate(null);
+    setNewDate('');
+    setEditError('');
+  };
+
+  const handleSaveDate = async (oldDate: string) => {
+    if (!newDate) {
+      setEditError('Please select a date');
+      return;
+    }
+
+    if (oldDate === newDate) {
+      handleCancelEdit();
+      return;
+    }
+
+    try {
+      const conflict = await checkDateConflict(newDate);
+      if (conflict) {
+        setEditError('❌ A comic is already scheduled for this date. Please choose a different date.');
+        return;
+      }
+
+      await updateEntryDate(oldDate, newDate);
+      await loadMuses();
+      handleCancelEdit();
+      alert(`✅ Successfully changed date from ${oldDate} to ${newDate}`);
+    } catch (error: any) {
+      console.error(error);
+      setEditError(error.message || 'Failed to update date');
     }
   };
 
@@ -196,7 +241,6 @@ const Admin: React.FC = () => {
     setGeneratedComicImage(null);
     setStatus(GenerationStatus.IDLE);
     setScheduledDate('');
-    setDateError('');
     setGenerationError('');
   };
 
@@ -386,8 +430,8 @@ const Admin: React.FC = () => {
 
                       <div className="bg-stone-50 p-5 border border-stone-200">
                           <label className="block text-xs font-bold text-stone-400 uppercase tracking-wider mb-2">Schedule Date</label>
-                          <input
-                              type="date"
+                          <input 
+                              type="date" 
                               value={scheduledDate}
                               onChange={(e) => {
                                   setScheduledDate(e.target.value);
@@ -396,8 +440,7 @@ const Admin: React.FC = () => {
                               className="w-full p-3 bg-white border border-stone-200 focus:border-stone-900 outline-none mb-2"
                           />
                           {dateError && <p className="text-red-500 text-xs mb-3">{dateError}</p>}
-                          {uploadError && <p className="text-red-500 text-xs mb-3">{uploadError}</p>}
-                          <button
+                          <button 
                               onClick={handleSchedule}
                               disabled={!scheduledDate || status === GenerationStatus.UPLOADING}
                               className="w-full bg-stone-900 text-white py-3 font-bold uppercase text-xs hover:bg-stone-800 flex items-center justify-center"
@@ -449,23 +492,107 @@ const Admin: React.FC = () => {
         </div>
       )}
 
-      {/* Legacy Management Table */}
+      {/* Post Management Section */}
       <div className="mt-20 pt-10 border-t border-stone-200">
-          <h3 className="text-lg font-serif mb-6">Existing Schedules</h3>
-          {existingMuses.map(m => (
-              <div key={m.scheduledDate} className="flex items-center justify-between py-3 border-b border-stone-100">
-                  <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-stone-100 overflow-hidden">
-                          <img src={m.titleImage || m.comicImage || (m as any).imageUrl} className="w-full h-full object-cover"/>
-                      </div>
-                      <div>
-                          <p className="text-sm font-bold">{m.scheduledDate}</p>
-                          <p className="text-xs text-stone-500">{m.title || 'Untitled'}</p>
-                      </div>
-                  </div>
-                  <button onClick={() => handleDelete(m.scheduledDate)} className="text-stone-400 hover:text-red-500"><X className="w-4 h-4"/></button>
+          <div className="flex items-center justify-between mb-6">
+              <div>
+                  <h3 className="text-lg font-serif font-bold text-stone-900">Published Comics</h3>
+                  <p className="text-xs text-stone-500 mt-1">Manage your scheduled and published entries</p>
               </div>
-          ))}
+              <div className="text-xs text-stone-400 font-mono">
+                  {existingMuses.length} {existingMuses.length === 1 ? 'entry' : 'entries'}
+              </div>
+          </div>
+
+          {existingMuses.length === 0 ? (
+              <div className="text-center py-12 bg-stone-50 border border-stone-200 rounded-sm">
+                  <p className="text-stone-400 text-sm font-serif italic">No comics published yet</p>
+                  <p className="text-stone-500 text-xs mt-2">Create your first comic above to get started</p>
+              </div>
+          ) : (
+              <div className="space-y-2">
+                  {existingMuses.map(m => (
+              <div key={m.scheduledDate} className="py-3 border-b border-stone-100">
+                  {editingDate === m.scheduledDate ? (
+                      // Edit Mode
+                      <div className="bg-blue-50 border-2 border-blue-300 rounded-sm p-4 space-y-3">
+                          <p className="text-xs font-bold text-blue-900 uppercase tracking-wider mb-2">✏️ Editing Date</p>
+                          <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 bg-stone-100 overflow-hidden flex-shrink-0 rounded border border-stone-200">
+                                  <img src={m.titleImage || m.comicImage || (m as any).imageUrl} className="w-full h-full object-cover"/>
+                              </div>
+                              <div className="flex-grow">
+                                  <label className="block text-xs font-bold text-stone-600 mb-1">New Date:</label>
+                                  <input
+                                      type="date"
+                                      value={newDate}
+                                      onChange={(e) => {
+                                          setNewDate(e.target.value);
+                                          setEditError('');
+                                      }}
+                                      className="w-full p-3 text-sm bg-white border-2 border-blue-300 focus:border-blue-500 outline-none rounded"
+                                  />
+                                  <p className="text-xs text-stone-500 mt-1">Original: {m.scheduledDate} - {m.title || 'Untitled'}</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                  <button
+                                      onClick={() => handleSaveDate(m.scheduledDate)}
+                                      className="px-4 py-2 text-white bg-green-600 hover:bg-green-700 rounded font-medium text-sm"
+                                      title="Save new date"
+                                  >
+                                      <Save className="w-4 h-4 inline mr-1"/>
+                                      Save
+                                  </button>
+                                  <button
+                                      onClick={handleCancelEdit}
+                                      className="px-4 py-2 text-stone-600 hover:text-stone-900 bg-white hover:bg-stone-50 border border-stone-300 rounded font-medium text-sm"
+                                      title="Cancel editing"
+                                  >
+                                      <X className="w-4 h-4 inline mr-1"/>
+                                      Cancel
+                                  </button>
+                              </div>
+                          </div>
+                          {editError && (
+                              <p className="text-red-600 text-sm font-medium bg-red-50 border border-red-200 p-2 rounded">{editError}</p>
+                          )}
+                      </div>
+                  ) : (
+                      // View Mode
+                      <div className="flex items-center justify-between hover:bg-stone-50 px-3 py-2 rounded-sm transition-colors">
+                          <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 bg-stone-100 overflow-hidden rounded border border-stone-200">
+                                  <img src={m.titleImage || m.comicImage || (m as any).imageUrl} className="w-full h-full object-cover"/>
+                              </div>
+                              <div>
+                                  <p className="text-sm font-bold text-stone-900">{m.scheduledDate}</p>
+                                  <p className="text-xs text-stone-500">{m.title || 'Untitled'}</p>
+                              </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                              <button
+                                  onClick={() => handleStartEdit(m.scheduledDate)}
+                                  className="px-3 py-2 text-stone-600 hover:text-stone-900 bg-white hover:bg-stone-50 border border-stone-200 hover:border-stone-300 rounded text-xs font-medium transition-all"
+                                  title="Change date"
+                              >
+                                  <Edit2 className="w-3.5 h-3.5 inline mr-1"/>
+                                  Edit Date
+                              </button>
+                              <button
+                                  onClick={() => handleDelete(m.scheduledDate)}
+                                  className="px-3 py-2 text-white bg-red-500 hover:bg-red-600 border border-red-500 hover:border-red-600 rounded text-xs font-medium transition-all"
+                                  title="Delete entry"
+                              >
+                                  <X className="w-3.5 h-3.5 inline mr-1"/>
+                                  Delete
+                              </button>
+                          </div>
+                      </div>
+                  )}
+              </div>
+                  ))}
+              </div>
+          )}
       </div>
 
     </div>
