@@ -3,7 +3,56 @@ import { HashRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
 import Home from './pages/Home';
 import Archive from './pages/Archive';
 import Admin from './pages/Admin';
+import StoryAtlas from './pages/StoryAtlas';
 import { Menu, X } from 'lucide-react';
+
+const Sidebar: React.FC = () => {
+  const location = useLocation();
+
+  const navLinks = [
+    { path: '/', label: 'Today', icon: '📅' },
+    { path: '/archive', label: 'Archive', icon: '📚' },
+    { path: '/story-atlas', label: 'Story: Atlas', icon: '📖' },
+    { path: '/admin', label: 'Creator', icon: '✨' },
+  ];
+
+  return (
+    <aside className="fixed left-0 top-0 h-full w-64 bg-stone-50 border-r border-stone-200 z-40 flex flex-col">
+      {/* Logo */}
+      <Link to="/" className="p-6 border-b border-stone-200">
+        <span className="font-serif text-2xl font-semibold tracking-tight text-stone-900">
+          Daily Muse<span className="text-stone-400">.</span>
+        </span>
+      </Link>
+
+      {/* Navigation Links */}
+      <nav className="flex-1 p-4">
+        <ul className="space-y-2">
+          {navLinks.map((link) => (
+            <li key={link.path}>
+              <Link
+                to={link.path}
+                className={`flex items-center gap-3 px-4 py-3 rounded-sm transition-all ${
+                  location.pathname === link.path
+                    ? 'bg-stone-900 text-white'
+                    : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
+                }`}
+              >
+                <span className="text-xl">{link.icon}</span>
+                <span className="text-sm font-medium">{link.label}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </nav>
+
+      {/* Footer */}
+      <div className="p-6 border-t border-stone-200">
+        <p className="text-xs text-stone-400 text-center">Art by AI · Curated by Human</p>
+      </div>
+    </aside>
+  );
+};
 
 const Navigation: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -12,11 +61,12 @@ const Navigation: React.FC = () => {
   const navLinks = [
     { path: '/', label: 'Today' },
     { path: '/archive', label: 'Archive' },
+    { path: '/story-atlas', label: 'Story: Atlas' },
     { path: '/admin', label: 'Creator' },
   ];
 
   return (
-    <nav className="fixed top-0 left-0 right-0 bg-stone-50/90 backdrop-blur-sm border-b border-stone-200 z-50">
+    <nav className="fixed top-0 left-0 right-0 bg-stone-50/90 backdrop-blur-sm border-b border-stone-200 z-50 md:hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
           
@@ -95,16 +145,28 @@ const Footer: React.FC = () => (
 export default function App() {
   return (
     <HashRouter>
-      <div className="flex flex-col min-h-screen bg-stone-50">
-        <Navigation />
-        <main className="flex-grow pt-20">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/archive" element={<Archive />} />
-            <Route path="/admin" element={<Admin />} />
-          </Routes>
-        </main>
-        <Footer />
+      <div className="flex min-h-screen bg-stone-50">
+        {/* Sidebar - hidden on mobile, visible on desktop */}
+        <div className="hidden md:block">
+          <Sidebar />
+        </div>
+
+        {/* Main content area */}
+        <div className="flex flex-col flex-1 md:ml-64">
+          {/* Mobile navigation only */}
+          <Navigation />
+
+          <main className="flex-grow pt-20 md:pt-0">
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/archive" element={<Archive />} />
+              <Route path="/story-atlas" element={<StoryAtlas />} />
+              <Route path="/admin" element={<Admin />} />
+            </Routes>
+          </main>
+
+          <Footer />
+        </div>
       </div>
     </HashRouter>
   );

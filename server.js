@@ -13,9 +13,13 @@ app.use(express.json({ limit: '50mb' }));
 
 const MUSES_DIR = path.join(__dirname, 'public', 'data', 'muses');
 const INDEX_FILE = path.join(MUSES_DIR, 'index.json');
+const STORY_ATLAS_DIR = path.join(__dirname, 'public', 'data', 'story-atlas');
+const STORY_ENTRIES_FILE = path.join(STORY_ATLAS_DIR, 'entries.json');
+const STORY_CHAR_REF_FILE = path.join(STORY_ATLAS_DIR, 'character-ref.json');
 
-// Ensure muses directory exists
+// Ensure directories exist
 await fs.mkdir(MUSES_DIR, { recursive: true });
+await fs.mkdir(STORY_ATLAS_DIR, { recursive: true });
 
 /**
  * Save a muse entry (images + metadata)
@@ -185,6 +189,92 @@ app.put('/api/muses/:oldDate', async (req, res) => {
   } catch (error) {
     console.error('Error updating muse date:', error);
     res.status(500).json({ error: 'Failed to update muse date' });
+  }
+});
+
+/**
+ * Story Atlas: Save character reference image
+ */
+app.post('/api/story-atlas/character-ref', async (req, res) => {
+  try {
+    const { imageData } = req.body;
+
+    if (!imageData) {
+      return res.status(400).json({ error: 'Image data is required' });
+    }
+
+    await fs.writeFile(
+      STORY_CHAR_REF_FILE,
+      JSON.stringify({ imageData }, null, 2)
+    );
+
+    res.json({ success: true, message: 'Character reference saved' });
+  } catch (error) {
+    console.error('Error saving character reference:', error);
+    res.status(500).json({ error: 'Failed to save character reference' });
+  }
+});
+
+/**
+ * Story Atlas: Generate illustration and save entry
+ */
+app.post('/api/story-atlas/generate', async (req, res) => {
+  try {
+    const { narration, characterRef } = req.body;
+
+    if (!narration) {
+      return res.status(400).json({ error: 'Narration is required' });
+    }
+
+    // Import Gemini functions (we'll need to expose them)
+    const { generateStoryIllustration } = await import('./services/gemini-story.js');
+
+    // Generate illustration
+    const illustrationData = await generateStoryIllustration(narration, characterRef);
+
+    // Save illustration image
+    const timestamp = Date.now();
+    const filename = `${timestamp}.jpg`;
+    const base64Data = illustrationData.replace(/^data:image\/\w+;base64,/, '');
+    const buffer = Buffer.from(base64Data, 'base64');
+
+    await fs.writeFile(
+      path.join(STORY_ATLAS_DIR, filename),
+      buffer
+    );
+
+    // Load existing entries
+    let entries = [];
+    try {
+      const data = await fs.readFile(STORY_ENTRIES_FILE, 'utf-8');
+      entries = JSON.parse(data);
+    } catch (error) {
+      // File doesn't exist yet
+    }
+
+    // Add new entry
+    const newEntry = {
+      id: timestamp.toString(),
+      narration,
+      illustration: `/data/story-atlas/${filename}`,
+      createdAt: timestamp
+    };
+
+    entries.push(newEntry);
+
+    // Save updated entries
+    await fs.writeFile(
+      STORY_ENTRIES_FILE,
+      JSON.stringify(entries, null, 2)
+    );
+
+    res.json({
+      success: true,
+      illustration: `data:image/jpeg;base64,${illustrationData}`
+    });
+  } catch (error) {
+    console.error('Error generating story illustration:', error);
+    res.status(500).json({ error: error.message || 'Failed to generate illustration' });
   }
 });
 
