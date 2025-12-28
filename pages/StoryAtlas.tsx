@@ -9,6 +9,13 @@ interface StoryEntry {
 }
 
 const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || 'admin123';
+const BASE_PATH = import.meta.env.BASE_URL || '/';
+
+// Helper function to get full path for assets
+const getAssetPath = (path: string) => {
+  if (path.startsWith('data:')) return path; // Skip data URLs
+  return `${BASE_PATH}${path.replace(/^\//, '')}`.replace(/\/+/g, '/');
+};
 
 const StoryAtlas: React.FC = () => {
   // Auth state
@@ -35,7 +42,8 @@ const StoryAtlas: React.FC = () => {
 
   const loadStories = async () => {
     try {
-      const response = await fetch('/data/story-atlas/entries.json');
+      const url = `${BASE_PATH}data/story-atlas/entries.json`.replace(/\/+/g, '/');
+      const response = await fetch(url);
       if (response.ok) {
         const data = await response.json();
         setEntries(data);
@@ -48,7 +56,8 @@ const StoryAtlas: React.FC = () => {
 
   const loadCharacterRef = async () => {
     try {
-      const response = await fetch('/data/story-atlas/character-ref.json');
+      const url = `${BASE_PATH}data/story-atlas/character-ref.json`.replace(/\/+/g, '/');
+      const response = await fetch(url);
       if (response.ok) {
         const data = await response.json();
         setCharacterRef(data.imageData);
@@ -61,7 +70,8 @@ const StoryAtlas: React.FC = () => {
 
   const loadArtStyle = async () => {
     try {
-      const response = await fetch('/data/story-atlas/art-style.json');
+      const url = `${BASE_PATH}data/story-atlas/art-style.json`.replace(/\/+/g, '/');
+      const response = await fetch(url);
       if (response.ok) {
         const data = await response.json();
         setArtStyle(data.artStyle || '');
@@ -362,7 +372,7 @@ const StoryAtlas: React.FC = () => {
                   <div className="w-full md:w-1/2">
                     <div className="aspect-square bg-white border border-stone-200 shadow-lg overflow-hidden">
                       <img
-                        src={entry.illustration}
+                        src={getAssetPath(entry.illustration)}
                         alt={`Illustration ${index + 1}`}
                         className="w-full h-full object-cover"
                       />
