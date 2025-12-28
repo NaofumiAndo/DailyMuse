@@ -36,36 +36,65 @@ const Archive: React.FC = () => {
           <p className="text-stone-400 font-serif italic text-lg">The archive is waiting for its first memory.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-16">
           {entries.map((entry) => {
-            // Priority: Title Image -> Comic Image -> Legacy Image
-            const thumbnail = entry.titleImage || entry.comicImage || (entry as any).imageUrl || (entry as any).panels?.[0]?.imageUrl;
+            const titleImg = entry.titleImage;
+            const comicImg = entry.comicImage || (entry as any).imageUrl || (entry as any).panels?.[0]?.imageUrl;
             const title = entry.title || 'Untitled';
             const subtitle = entry.episodeNumber ? `${entry.episodeNumber}` : (entry as any).concept;
 
             return (
-                <div key={entry.scheduledDate} className="group flex flex-col bg-white transition-all duration-300 hover:-translate-y-1 cursor-pointer">
-                
-                {/* Image Container */}
-                <div className="aspect-square overflow-hidden bg-stone-100 border border-stone-200 relative mb-4">
-                    <div className="absolute inset-0 bg-stone-900/0 group-hover:bg-stone-900/5 transition-colors z-10 duration-500" />
-                    <img 
-                    src={thumbnail} 
-                    alt={title} 
-                    className="w-full h-full object-cover filter contrast-[1.02] transform group-hover:scale-105 transition-transform duration-700"
-                    />
-                </div>
+                <div key={entry.scheduledDate} className="group flex flex-col bg-white">
 
-                {/* Text Content */}
-                <div className="flex flex-col flex-grow text-center px-4">
+                {/* Text Header */}
+                <div className="flex flex-col text-center mb-6">
                     <div className="mb-2 text-[10px] font-bold tracking-[0.2em] text-stone-400 uppercase">
                     {new Date(entry.scheduledDate + 'T00:00:00').toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
                     </div>
-                    <h3 className="font-serif text-lg text-stone-900 font-bold mb-1">{title}</h3>
-                    <p className="font-serif text-sm text-stone-500 italic line-clamp-2 leading-relaxed group-hover:text-stone-900 transition-colors">
+                    <h3 className="font-serif text-2xl text-stone-900 font-bold mb-1">{title}</h3>
+                    <p className="font-mono text-xs text-stone-500">
                     {subtitle}
                     </p>
                 </div>
+
+                {/* Images Container */}
+                <div className="space-y-6">
+                    {/* Title Image */}
+                    {titleImg && (
+                        <div className="shadow-2xl shadow-stone-200 bg-white p-2 transition-transform duration-300 hover:scale-[1.02]">
+                            <div className="aspect-square w-full bg-stone-100 overflow-hidden">
+                                <img
+                                    src={titleImg}
+                                    alt={`${title} - Title Card`}
+                                    className="w-full h-full object-cover"
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Comic Image */}
+                    {comicImg && (
+                        <div className="bg-white shadow-lg shadow-stone-200 border border-stone-100 p-2 transition-transform duration-300 hover:scale-[1.02]">
+                            <div className="aspect-square w-full bg-stone-50 overflow-hidden">
+                                <img
+                                    src={comicImg}
+                                    alt={`${title} - Comic`}
+                                    className="w-full h-full object-cover"
+                                />
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Concept Quote */}
+                {entry.concept && (
+                    <div className="mt-8 text-center max-w-xl mx-auto">
+                        <div className="w-8 h-px bg-stone-300 mx-auto mb-4"></div>
+                        <p className="font-serif text-stone-500 italic leading-relaxed text-sm">
+                            "{entry.concept}"
+                        </p>
+                    </div>
+                )}
                 </div>
             );
           })}
