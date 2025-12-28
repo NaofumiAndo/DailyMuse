@@ -278,6 +278,48 @@ app.post('/api/story-atlas/generate', async (req, res) => {
   }
 });
 
+/**
+ * Story Atlas: Delete an entry
+ */
+app.delete('/api/story-atlas/entries/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Load existing entries
+    let entries = [];
+    try {
+      const data = await fs.readFile(STORY_ENTRIES_FILE, 'utf-8');
+      entries = JSON.parse(data);
+    } catch (error) {
+      return res.status(404).json({ error: 'No entries found' });
+    }
+
+    // Find the entry to delete
+    const entryToDelete = entries.find(e => e.id === id);
+    if (!entryToDelete) {
+      return res.status(404).json({ error: 'Entry not found' });
+    }
+
+    // Delete the image file
+    const filename = entryToDelete.illustration.split('/').pop();
+    await fs.unlink(path.join(STORY_ATLAS_DIR, filename)).catch(() => {});
+
+    // Remove entry from array
+    entries = entries.filter(e => e.id !== id);
+
+    // Save updated entries
+    await fs.writeFile(
+      STORY_ENTRIES_FILE,
+      JSON.stringify(entries, null, 2)
+    );
+
+    res.json({ success: true, message: 'Story entry deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting story entry:', error);
+    res.status(500).json({ error: 'Failed to delete story entry' });
+  }
+});
+
 const PORT = 3001;
 app.listen(PORT, () => {
   console.log(`✅ GitHub Storage API running on http://localhost:${PORT}`);

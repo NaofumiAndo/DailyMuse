@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Loader2, Lock, Save, ImagePlus, Upload, X } from 'lucide-react';
+import { Loader2, Lock, Save, ImagePlus, Upload, X, Trash2 } from 'lucide-react';
 
 interface StoryEntry {
   id: string;
@@ -152,6 +152,30 @@ const StoryAtlas: React.FC = () => {
     setGeneratingImage(false);
   };
 
+  const handleDeleteEntry = async (id: string) => {
+    const entry = entries.find(e => e.id === id);
+    if (!entry) return;
+
+    const confirmText = `Are you sure you want to delete this story entry?\n\n"${entry.narration.substring(0, 100)}..."\n\nThis cannot be undone.`;
+
+    if (!confirm(confirmText)) return;
+
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const response = await fetch(`${API_URL}/api/story-atlas/entries/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) throw new Error('Delete failed');
+
+      setEntries(entries.filter(e => e.id !== id));
+      alert('✅ Story entry deleted successfully');
+    } catch (error) {
+      console.error('Error deleting entry:', error);
+      alert('❌ Failed to delete entry');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -278,35 +302,48 @@ const StoryAtlas: React.FC = () => {
         ) : (
           <div className="space-y-16">
             {entries.map((entry, index) => (
-              <div key={entry.id} className="flex flex-col md:flex-row gap-8 items-start">
-                {/* Illustration */}
-                <div className="w-full md:w-1/2">
-                  <div className="aspect-square bg-white border border-stone-200 shadow-lg overflow-hidden">
-                    <img
-                      src={entry.illustration}
-                      alt={`Illustration ${index + 1}`}
-                      className="w-full h-full object-cover"
-                    />
+              <div key={entry.id} className="relative">
+                <div className="flex flex-col md:flex-row gap-8 items-center">
+                  {/* Illustration */}
+                  <div className="w-full md:w-1/2">
+                    <div className="aspect-square bg-white border border-stone-200 shadow-lg overflow-hidden">
+                      <img
+                        src={entry.illustration}
+                        alt={`Illustration ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Narration */}
+                  <div className="w-full md:w-1/2">
+                    <div className="prose prose-stone max-w-none">
+                      <p className="text-stone-700 leading-relaxed whitespace-pre-wrap font-serif text-lg" style={{ fontFamily: '"Crimson Text", "Georgia", serif' }}>
+                        {entry.narration}
+                      </p>
+                    </div>
+                    <div className="mt-6 pt-4 border-t border-stone-200">
+                      <p className="text-xs text-stone-400">
+                        {new Date(entry.createdAt).toLocaleDateString(undefined, {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </p>
+                    </div>
                   </div>
                 </div>
 
-                {/* Narration */}
-                <div className="w-full md:w-1/2 pt-4">
-                  <div className="prose prose-stone max-w-none">
-                    <p className="text-stone-700 leading-relaxed whitespace-pre-wrap">
-                      {entry.narration}
-                    </p>
-                  </div>
-                  <div className="mt-4 pt-4 border-t border-stone-200">
-                    <p className="text-xs text-stone-400">
-                      {new Date(entry.createdAt).toLocaleDateString(undefined, {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      })}
-                    </p>
-                  </div>
-                </div>
+                {/* Delete button - Creator mode only */}
+                {isCreatorMode && (
+                  <button
+                    onClick={() => handleDeleteEntry(entry.id)}
+                    className="absolute top-2 right-2 p-2 bg-red-600 text-white rounded-sm hover:bg-red-700 shadow-md transition-all"
+                    title="Delete this entry"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
               </div>
             ))}
           </div>
