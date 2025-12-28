@@ -191,6 +191,7 @@ const Admin: React.FC = () => {
   };
 
   const handleStartEdit = (date: string) => {
+    console.log('Starting edit for date:', date);
     setEditingDate(date);
     setNewDate(date);
     setEditError('');
@@ -514,12 +515,14 @@ const Admin: React.FC = () => {
               <div key={m.scheduledDate} className="py-3 border-b border-stone-100">
                   {editingDate === m.scheduledDate ? (
                       // Edit Mode
-                      <div className="space-y-2">
+                      <div className="bg-blue-50 border-2 border-blue-300 rounded-sm p-4 space-y-3">
+                          <p className="text-xs font-bold text-blue-900 uppercase tracking-wider mb-2">✏️ Editing Date</p>
                           <div className="flex items-center gap-4">
-                              <div className="w-12 h-12 bg-stone-100 overflow-hidden flex-shrink-0">
+                              <div className="w-12 h-12 bg-stone-100 overflow-hidden flex-shrink-0 rounded border border-stone-200">
                                   <img src={m.titleImage || m.comicImage || (m as any).imageUrl} className="w-full h-full object-cover"/>
                               </div>
                               <div className="flex-grow">
+                                  <label className="block text-xs font-bold text-stone-600 mb-1">New Date:</label>
                                   <input
                                       type="date"
                                       value={newDate}
@@ -527,29 +530,31 @@ const Admin: React.FC = () => {
                                           setNewDate(e.target.value);
                                           setEditError('');
                                       }}
-                                      className="w-full p-2 text-sm bg-white border border-stone-900 focus:border-stone-900 outline-none"
+                                      className="w-full p-3 text-sm bg-white border-2 border-blue-300 focus:border-blue-500 outline-none rounded"
                                   />
-                                  <p className="text-xs text-stone-500 mt-1">{m.title || 'Untitled'}</p>
+                                  <p className="text-xs text-stone-500 mt-1">Original: {m.scheduledDate} - {m.title || 'Untitled'}</p>
                               </div>
                               <div className="flex items-center gap-2">
                                   <button
                                       onClick={() => handleSaveDate(m.scheduledDate)}
-                                      className="p-2 text-green-600 hover:bg-green-50 rounded"
-                                      title="Save"
+                                      className="px-4 py-2 text-white bg-green-600 hover:bg-green-700 rounded font-medium text-sm"
+                                      title="Save new date"
                                   >
-                                      <Save className="w-4 h-4"/>
+                                      <Save className="w-4 h-4 inline mr-1"/>
+                                      Save
                                   </button>
                                   <button
                                       onClick={handleCancelEdit}
-                                      className="p-2 text-stone-400 hover:bg-stone-50 rounded"
-                                      title="Cancel"
+                                      className="px-4 py-2 text-stone-600 hover:text-stone-900 bg-white hover:bg-stone-50 border border-stone-300 rounded font-medium text-sm"
+                                      title="Cancel editing"
                                   >
-                                      <X className="w-4 h-4"/>
+                                      <X className="w-4 h-4 inline mr-1"/>
+                                      Cancel
                                   </button>
                               </div>
                           </div>
                           {editError && (
-                              <p className="text-red-500 text-xs pl-16">{editError}</p>
+                              <p className="text-red-600 text-sm font-medium bg-red-50 border border-red-200 p-2 rounded">{editError}</p>
                           )}
                       </div>
                   ) : (
