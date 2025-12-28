@@ -25,10 +25,12 @@ const StoryAtlas: React.FC = () => {
   const [generatingImage, setGeneratingImage] = useState(false);
   const [characterRef, setCharacterRef] = useState<string | null>(null);
   const [characterRefPreview, setCharacterRefPreview] = useState<string | null>(null);
+  const [artStyle, setArtStyle] = useState('');
 
   useEffect(() => {
     loadStories();
     loadCharacterRef();
+    loadArtStyle();
   }, []);
 
   const loadStories = async () => {
@@ -54,6 +56,18 @@ const StoryAtlas: React.FC = () => {
       }
     } catch (error) {
       console.log('No character reference found');
+    }
+  };
+
+  const loadArtStyle = async () => {
+    try {
+      const response = await fetch('/data/story-atlas/art-style.json');
+      if (response.ok) {
+        const data = await response.json();
+        setArtStyle(data.artStyle || '');
+      }
+    } catch (error) {
+      console.log('No art style found');
     }
   };
 
@@ -112,6 +126,21 @@ const StoryAtlas: React.FC = () => {
     }
   };
 
+  const saveArtStyle = async () => {
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      await fetch(`${API_URL}/api/story-atlas/art-style`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ artStyle }),
+      });
+      alert('✅ Art style saved!');
+    } catch (error) {
+      console.error('Error saving art style:', error);
+      alert('❌ Failed to save art style');
+    }
+  };
+
   const handleGenerateIllustration = async () => {
     if (!narration.trim()) {
       alert('Please enter narration first');
@@ -126,7 +155,8 @@ const StoryAtlas: React.FC = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           narration,
-          characterRef
+          characterRef,
+          artStyle
         }),
       });
 
@@ -259,6 +289,30 @@ const StoryAtlas: React.FC = () => {
                   className="hidden"
                 />
               </div>
+            </div>
+
+            {/* Art Style Settings */}
+            <div className="mb-6">
+              <label className="block text-xs font-bold text-stone-700 mb-2">Art Style (optional - will be applied to all future illustrations)</label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={artStyle}
+                  onChange={(e) => setArtStyle(e.target.value)}
+                  placeholder="e.g., watercolor, oil painting, anime style, cinematic lighting..."
+                  className="flex-1 px-4 py-2 border-2 border-blue-200 rounded-sm focus:border-blue-400 outline-none text-sm"
+                />
+                <button
+                  onClick={saveArtStyle}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-sm hover:bg-blue-700 text-sm"
+                >
+                  <Save className="w-4 h-4" />
+                  Save
+                </button>
+              </div>
+              {artStyle && (
+                <p className="text-xs text-green-700 mt-2">✓ Current style: "{artStyle}"</p>
+              )}
             </div>
 
             {/* Narration Input */}

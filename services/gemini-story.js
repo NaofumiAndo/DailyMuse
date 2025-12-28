@@ -16,7 +16,7 @@ const getFirstImageFromResponse = (response) => {
   throw new Error("No image generated.");
 };
 
-export const generateStoryIllustration = async (narration, characterRefBase64 = null) => {
+export const generateStoryIllustration = async (narration, characterRefBase64 = null, artStyle = null) => {
   const apiKey = process.env.GEMINI_API_KEY;
 
   if (!apiKey) {
@@ -26,7 +26,19 @@ export const generateStoryIllustration = async (narration, characterRefBase64 = 
   const ai = new GoogleGenAI({ apiKey });
 
   let characterInstruction = "";
+  let styleInstruction = "";
   let contents = [];
+
+  // Build style instruction
+  if (artStyle && artStyle.trim()) {
+    styleInstruction = `\n\nArt Style: ${artStyle}`;
+  } else {
+    styleInstruction = `\n\nStyle Guidelines:
+- Detailed anime/manga aesthetic
+- Expressive characters and atmosphere
+- Cinematic composition
+- Rich colors and clean linework`;
+  }
 
   if (characterRefBase64) {
     // Extract base64 data
@@ -46,7 +58,7 @@ export const generateStoryIllustration = async (narration, characterRefBase64 = 
           mimeType: mimeType
         }
       },
-      narration + "\n\n" + characterInstruction
+      narration + "\n\n" + characterInstruction + styleInstruction
     ];
   } else {
     contents = narration;
@@ -57,12 +69,7 @@ export const generateStoryIllustration = async (narration, characterRefBase64 = 
     : `Create an illustration for this story scene:
 
 "${narration}"
-
-Style Guidelines:
-- Detailed anime/manga aesthetic
-- Expressive characters and atmosphere
-- Cinematic composition
-- Rich colors and clean linework
+${styleInstruction}
 - Square format (1:1 aspect ratio)`;
 
   try {
