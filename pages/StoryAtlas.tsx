@@ -366,7 +366,7 @@ const StoryAtlas: React.FC = () => {
         ) : (
           <div className="space-y-16">
             {entries.map((entry, index) => (
-              <div key={entry.id} className="relative">
+              <div key={entry.id} className="relative border-2 border-transparent hover:border-stone-200 transition-all rounded-lg p-4">
                 <div className="flex flex-col md:flex-row gap-8 items-center">
                   {/* Illustration */}
                   <div className="w-full md:w-1/2">
@@ -386,7 +386,7 @@ const StoryAtlas: React.FC = () => {
                         {entry.narration}
                       </p>
                     </div>
-                    <div className="mt-6 pt-4 border-t border-stone-200">
+                    <div className="mt-6 pt-4 border-t border-stone-200 flex items-center justify-between">
                       <p className="text-xs text-stone-400">
                         {new Date(entry.createdAt).toLocaleDateString(undefined, {
                           year: 'numeric',
@@ -394,20 +394,21 @@ const StoryAtlas: React.FC = () => {
                           day: 'numeric'
                         })}
                       </p>
+
+                      {/* Delete button - Creator mode only */}
+                      {isCreatorMode && (
+                        <button
+                          onClick={() => handleDeleteEntry(entry.id)}
+                          className="flex items-center gap-2 px-3 py-2 bg-red-600 text-white rounded-sm hover:bg-red-700 shadow-md transition-all text-xs font-medium"
+                          title="Delete this entry"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                          Delete
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
-
-                {/* Delete button - Creator mode only */}
-                {isCreatorMode && (
-                  <button
-                    onClick={() => handleDeleteEntry(entry.id)}
-                    className="absolute top-2 right-2 p-2 bg-red-600 text-white rounded-sm hover:bg-red-700 shadow-md transition-all"
-                    title="Delete this entry"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                )}
               </div>
             ))}
           </div>
