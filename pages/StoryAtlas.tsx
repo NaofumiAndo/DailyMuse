@@ -38,6 +38,9 @@ const StoryAtlas: React.FC = () => {
   const [submittingEntry, setSubmittingEntry] = useState(false);
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
   const [editedNarration, setEditedNarration] = useState('');
+  const [replacingImageId, setReplacingImageId] = useState<string | null>(null);
+  const [replacementImage, setReplacementImage] = useState<string | null>(null);
+  const [generatingReplacement, setGeneratingReplacement] = useState(false);
 
   useEffect(() => {
     loadStories();
@@ -264,6 +267,71 @@ const StoryAtlas: React.FC = () => {
       console.error('Error updating narration:', error);
       alert('❌ Failed to update narration');
     }
+  };
+
+  const handleGenerateReplacement = async (id: string, narration: string) => {
+    setReplacingImageId(id);
+    setGeneratingReplacement(true);
+
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const response = await fetch(`${API_URL}/api/story-atlas/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          narration,
+          characterRef,
+          artStyle
+        }),
+      });
+
+      if (!response.ok) throw new Error('Generation failed');
+
+      const data = await response.json();
+      setReplacementImage(data.illustration);
+    } catch (error) {
+      console.error('Error generating replacement:', error);
+      alert('❌ Failed to generate replacement image');
+      setReplacingImageId(null);
+    }
+    setGeneratingReplacement(false);
+  };
+
+  const handleConfirmReplacement = async () => {
+    if (!replacingImageId || !replacementImage) return;
+
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const response = await fetch(`${API_URL}/api/story-atlas/entries/${replacingImageId}/image`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ illustration: replacementImage }),
+      });
+
+      if (!response.ok) throw new Error('Update failed');
+
+      // Update the entry in local state
+      setEntries(entries.map(e =>
+        e.id === replacingImageId
+          ? { ...e, illustration: replacementImage }
+          : e
+      ));
+
+      setReplacingImageId(null);
+      setReplacementImage(null);
+      alert('✅ Image replaced successfully');
+
+      // Reload to get persisted version
+      await loadStories();
+    } catch (error) {
+      console.error('Error replacing image:', error);
+      alert('❌ Failed to replace image');
+    }
+  };
+
+  const handleCancelReplacement = () => {
+    setReplacingImageId(null);
+    setReplacementImage(null);
   };
 
   const handleDeleteEntry = async (id: string) => {
@@ -504,13 +572,52 @@ const StoryAtlas: React.FC = () => {
                 <div className="flex flex-col md:flex-row gap-8 items-center">
                   {/* Illustration */}
                   <div className="w-full md:w-1/2">
-                    <div className="aspect-square bg-white border border-stone-200 shadow-lg overflow-hidden">
-                      <img
-                        src={getAssetPath(entry.illustration)}
-                        alt={`Illustration ${index + 1}`}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
+                    {replacingImageId === entry.id && replacementImage ? (
+                      // Replacement Preview
+                      <div>
+                        <div className="aspect-square bg-white border-2 border-green-400 shadow-lg overflow-hidden mb-4">
+                          <img
+                            src={replacementImage}
+                            alt="New illustration preview"
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <p className="text-xs font-bold text-green-700 mb-2">New Image Preview:</p>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={handleConfirmReplacement}
+                            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-sm hover:bg-green-700 text-sm font-medium"
+                          >
+                            <Save className="w-4 h-4" />
+                            Replace Image
+                          </button>
+                          <button
+                            onClick={handleCancelReplacement}
+                            className="flex items-center gap-2 px-4 py-2 bg-stone-500 text-white rounded-sm hover:bg-stone-600 text-sm"
+                          >
+                            <X className="w-4 h-4" />
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      // Normal View
+                      <div>
+                        <div className="aspect-square bg-white border border-stone-200 shadow-lg overflow-hidden">
+                          <img
+                            src={getAssetPath(entry.illustration)}
+                            alt={`Illustration ${index + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        {isCreatorMode && replacingImageId === entry.id && generatingReplacement && (
+                          <div className="mt-4 text-center">
+                            <Loader2 className="w-6 h-6 animate-spin mx-auto text-blue-600" />
+                            <p className="text-sm text-blue-600 mt-2">Generating new image...</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   {/* Narration */}
@@ -559,16 +666,25 @@ const StoryAtlas: React.FC = () => {
                             })}
                           </p>
 
-                          {/* Edit and Delete buttons - Creator mode only */}
+                          {/* Edit, Replace Image, and Delete buttons - Creator mode only */}
                           {isCreatorMode && (
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 flex-wrap">
                               <button
                                 onClick={() => handleStartEdit(entry.id, entry.narration)}
                                 className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-sm hover:bg-blue-700 shadow-md transition-all text-xs font-medium"
-                                title="Edit this entry"
+                                title="Edit narration"
                               >
                                 <Pencil className="w-3 h-3" />
-                                Edit
+                                Edit Text
+                              </button>
+                              <button
+                                onClick={() => handleGenerateReplacement(entry.id, entry.narration)}
+                                disabled={generatingReplacement && replacingImageId === entry.id}
+                                className="flex items-center gap-2 px-3 py-2 bg-purple-600 text-white rounded-sm hover:bg-purple-700 shadow-md transition-all text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                                title="Replace image"
+                              >
+                                <ImagePlus className="w-3 h-3" />
+                                Replace Image
                               </button>
                               <button
                                 onClick={() => handleDeleteEntry(entry.id)}

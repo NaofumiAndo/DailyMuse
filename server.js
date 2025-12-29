@@ -364,6 +364,66 @@ app.put('/api/story-atlas/entries/:id', async (req, res) => {
 });
 
 /**
+ * Story Atlas: Replace an entry's image
+ */
+app.put('/api/story-atlas/entries/:id/image', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { illustration } = req.body;
+
+    if (!illustration) {
+      return res.status(400).json({ error: 'Illustration is required' });
+    }
+
+    // Load existing entries
+    let entries = [];
+    try {
+      const data = await fs.readFile(STORY_ENTRIES_FILE, 'utf-8');
+      entries = JSON.parse(data);
+    } catch (error) {
+      return res.status(404).json({ error: 'No entries found' });
+    }
+
+    // Find the entry to update
+    const entryIndex = entries.findIndex(e => e.id === id);
+    if (entryIndex === -1) {
+      return res.status(404).json({ error: 'Entry not found' });
+    }
+
+    const oldEntry = entries[entryIndex];
+
+    // Delete old image file
+    const oldFilename = oldEntry.illustration.split('/').pop();
+    await fs.unlink(path.join(STORY_ATLAS_DIR, oldFilename)).catch(() => {});
+
+    // Save new illustration image
+    const timestamp = Date.now();
+    const filename = `${timestamp}.jpg`;
+    const base64Data = illustration.replace(/^data:image\/\w+;base64,/, '');
+    const buffer = Buffer.from(base64Data, 'base64');
+
+    await fs.writeFile(
+      path.join(STORY_ATLAS_DIR, filename),
+      buffer
+    );
+
+    // Update the entry
+    entries[entryIndex].illustration = `/data/story-atlas/${filename}`;
+
+    // Save updated entries
+    await fs.writeFile(
+      STORY_ENTRIES_FILE,
+      JSON.stringify(entries, null, 2)
+    );
+
+    res.json({ success: true, message: 'Image replaced successfully' });
+  } catch (error) {
+    console.error('Error replacing image:', error);
+    res.status(500).json({ error: 'Failed to replace image' });
+  }
+});
+
+/**
  * Story Atlas: Delete an entry
  */
 app.delete('/api/story-atlas/entries/:id', async (req, res) => {
