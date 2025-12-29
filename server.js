@@ -236,7 +236,7 @@ app.post('/api/story-atlas/art-style', async (req, res) => {
 });
 
 /**
- * Story Atlas: Generate illustration and save entry
+ * Story Atlas: Generate illustration preview (doesn't save to entries.json)
  */
 app.post('/api/story-atlas/generate', async (req, res) => {
   try {
@@ -246,16 +246,38 @@ app.post('/api/story-atlas/generate', async (req, res) => {
       return res.status(400).json({ error: 'Narration is required' });
     }
 
-    // Import Gemini functions (we'll need to expose them)
+    // Import Gemini functions
     const { generateStoryIllustration } = await import('./services/gemini-story.js');
 
     // Generate illustration
     const illustrationData = await generateStoryIllustration(narration, characterRef, artStyle);
 
+    // Just return the image data for preview - don't save to entries.json yet
+    res.json({
+      success: true,
+      illustration: `data:image/jpeg;base64,${illustrationData}`
+    });
+  } catch (error) {
+    console.error('Error generating story illustration:', error);
+    res.status(500).json({ error: error.message || 'Failed to generate illustration' });
+  }
+});
+
+/**
+ * Story Atlas: Submit preview and save entry
+ */
+app.post('/api/story-atlas/submit', async (req, res) => {
+  try {
+    const { narration, illustration } = req.body;
+
+    if (!narration || !illustration) {
+      return res.status(400).json({ error: 'Narration and illustration are required' });
+    }
+
     // Save illustration image
     const timestamp = Date.now();
     const filename = `${timestamp}.jpg`;
-    const base64Data = illustrationData.replace(/^data:image\/\w+;base64,/, '');
+    const base64Data = illustration.replace(/^data:image\/\w+;base64,/, '');
     const buffer = Buffer.from(base64Data, 'base64');
 
     await fs.writeFile(
@@ -290,11 +312,11 @@ app.post('/api/story-atlas/generate', async (req, res) => {
 
     res.json({
       success: true,
-      illustration: `data:image/jpeg;base64,${illustrationData}`
+      message: 'Story entry saved successfully'
     });
   } catch (error) {
-    console.error('Error generating story illustration:', error);
-    res.status(500).json({ error: error.message || 'Failed to generate illustration' });
+    console.error('Error saving story entry:', error);
+    res.status(500).json({ error: 'Failed to save story entry' });
   }
 });
 

@@ -194,15 +194,17 @@ const StoryAtlas: React.FC = () => {
 
     setSubmittingEntry(true);
     try {
-      // Add new entry to the list
-      const newEntry: StoryEntry = {
-        id: Date.now().toString(),
-        narration: previewNarration,
-        illustration: previewImage,
-        createdAt: Date.now(),
-      };
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const response = await fetch(`${API_URL}/api/story-atlas/submit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          narration: previewNarration,
+          illustration: previewImage
+        }),
+      });
 
-      setEntries([...entries, newEntry]);
+      if (!response.ok) throw new Error('Submit failed');
 
       // Clear form and preview
       setNarration('');
@@ -376,21 +378,23 @@ const StoryAtlas: React.FC = () => {
             {/* Art Style Settings */}
             <div className="mb-6">
               <label className="block text-xs font-bold text-stone-700 mb-2">Art Style (optional - will be applied to all future illustrations)</label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
+              <div className="flex flex-col gap-2">
+                <textarea
                   value={artStyle}
                   onChange={(e) => setArtStyle(e.target.value)}
-                  placeholder="e.g., watercolor, oil painting, anime style, cinematic lighting..."
-                  className="flex-1 px-4 py-2 border-2 border-blue-200 rounded-sm focus:border-blue-400 outline-none text-sm"
+                  placeholder="e.g., watercolor, oil painting, anime style, cinematic lighting, dramatic shadows, soft pastels..."
+                  className="w-full h-24 px-4 py-3 border-2 border-blue-200 rounded-sm focus:border-blue-400 outline-none text-sm resize-y"
+                  rows={3}
                 />
-                <button
-                  onClick={saveArtStyle}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-sm hover:bg-blue-700 text-sm"
-                >
-                  <Save className="w-4 h-4" />
-                  Save
-                </button>
+                <div className="flex justify-end">
+                  <button
+                    onClick={saveArtStyle}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-sm hover:bg-blue-700 text-sm"
+                  >
+                    <Save className="w-4 h-4" />
+                    Save Art Style
+                  </button>
+                </div>
               </div>
               {artStyle && (
                 <p className="text-xs text-green-700 mt-2">✓ Current style: "{artStyle}"</p>
