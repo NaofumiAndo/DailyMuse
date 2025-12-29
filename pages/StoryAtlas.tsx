@@ -41,6 +41,7 @@ const StoryAtlas: React.FC = () => {
   const [replacingImageId, setReplacingImageId] = useState<string | null>(null);
   const [replacementImage, setReplacementImage] = useState<string | null>(null);
   const [generatingReplacement, setGeneratingReplacement] = useState(false);
+  const [replacementArtStyle, setReplacementArtStyle] = useState('');
 
   useEffect(() => {
     loadStories();
@@ -269,8 +270,12 @@ const StoryAtlas: React.FC = () => {
     }
   };
 
-  const handleGenerateReplacement = async (id: string, narration: string) => {
+  const handleStartReplacement = (id: string) => {
     setReplacingImageId(id);
+    setReplacementArtStyle(artStyle); // Initialize with current default art style
+  };
+
+  const handleGenerateReplacement = async (narration: string) => {
     setGeneratingReplacement(true);
 
     try {
@@ -281,7 +286,7 @@ const StoryAtlas: React.FC = () => {
         body: JSON.stringify({
           narration,
           characterRef,
-          artStyle
+          artStyle: replacementArtStyle
         }),
       });
 
@@ -292,7 +297,6 @@ const StoryAtlas: React.FC = () => {
     } catch (error) {
       console.error('Error generating replacement:', error);
       alert('❌ Failed to generate replacement image');
-      setReplacingImageId(null);
     }
     setGeneratingReplacement(false);
   };
@@ -332,6 +336,7 @@ const StoryAtlas: React.FC = () => {
   const handleCancelReplacement = () => {
     setReplacingImageId(null);
     setReplacementImage(null);
+    setReplacementArtStyle('');
   };
 
   const handleDeleteEntry = async (id: string) => {
@@ -600,6 +605,54 @@ const StoryAtlas: React.FC = () => {
                           </button>
                         </div>
                       </div>
+                    ) : replacingImageId === entry.id && !replacementImage ? (
+                      // Art Style Input Form
+                      <div>
+                        <div className="aspect-square bg-white border border-stone-200 shadow-lg overflow-hidden mb-4">
+                          <img
+                            src={getAssetPath(entry.illustration)}
+                            alt={`Illustration ${index + 1}`}
+                            className="w-full h-full object-cover opacity-50"
+                          />
+                        </div>
+                        <div className="p-4 bg-purple-50 border-2 border-purple-300 rounded-sm">
+                          <label className="block text-xs font-bold text-purple-900 mb-2">Art Style for Replacement:</label>
+                          <textarea
+                            value={replacementArtStyle}
+                            onChange={(e) => setReplacementArtStyle(e.target.value)}
+                            placeholder="e.g., watercolor, oil painting, anime style, cinematic lighting..."
+                            className="w-full h-24 px-4 py-3 border-2 border-purple-200 rounded-sm focus:border-purple-400 outline-none text-sm resize-y mb-3"
+                            rows={3}
+                          />
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleGenerateReplacement(entry.narration)}
+                              disabled={generatingReplacement}
+                              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-sm hover:bg-purple-700 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              {generatingReplacement ? (
+                                <>
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                  Generating...
+                                </>
+                              ) : (
+                                <>
+                                  <ImagePlus className="w-4 h-4" />
+                                  Generate New Image
+                                </>
+                              )}
+                            </button>
+                            <button
+                              onClick={handleCancelReplacement}
+                              disabled={generatingReplacement}
+                              className="flex items-center gap-2 px-4 py-2 bg-stone-500 text-white rounded-sm hover:bg-stone-600 text-sm disabled:opacity-50"
+                            >
+                              <X className="w-4 h-4" />
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      </div>
                     ) : (
                       // Normal View
                       <div>
@@ -610,12 +663,6 @@ const StoryAtlas: React.FC = () => {
                             className="w-full h-full object-cover"
                           />
                         </div>
-                        {isCreatorMode && replacingImageId === entry.id && generatingReplacement && (
-                          <div className="mt-4 text-center">
-                            <Loader2 className="w-6 h-6 animate-spin mx-auto text-blue-600" />
-                            <p className="text-sm text-blue-600 mt-2">Generating new image...</p>
-                          </div>
-                        )}
                       </div>
                     )}
                   </div>
@@ -678,9 +725,8 @@ const StoryAtlas: React.FC = () => {
                                 Edit Text
                               </button>
                               <button
-                                onClick={() => handleGenerateReplacement(entry.id, entry.narration)}
-                                disabled={generatingReplacement && replacingImageId === entry.id}
-                                className="flex items-center gap-2 px-3 py-2 bg-purple-600 text-white rounded-sm hover:bg-purple-700 shadow-md transition-all text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                                onClick={() => handleStartReplacement(entry.id)}
+                                className="flex items-center gap-2 px-3 py-2 bg-purple-600 text-white rounded-sm hover:bg-purple-700 shadow-md transition-all text-xs font-medium"
                                 title="Replace image"
                               >
                                 <ImagePlus className="w-3 h-3" />
