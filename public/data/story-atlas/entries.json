@@ -1,7 +1,7 @@
 [
   {
     "id": "1767005208612",
-    "narration": "It was a night when the stars shone beautifully. I remember a boy once standing atop a hill on a night like this. It’s a memory from so long ago that nostalgia alone can’t quite describe it.",
+    "narration": "It was a night when the stars shone beautifully. I remember a boy once standing atop a hill on a night like this. It is a memory so distant it feels less like nostalgia and more like a half-forgotten dream.",
     "illustration": "/data/story-atlas/1767005208612.jpg",
     "createdAt": 1767005208612
   },
@@ -16,5 +16,11 @@
     "narration": "One night, a strange light flickered against my eyelids. It felt different from the usual pale shimmer of the moon. Driven by curiosity, I opened my eyes. Outside my window, a single beam of light descended from the heavens like a silken thread, landing on a remote hill at the edge of town.",
     "illustration": "/data/story-atlas/1767009703161.jpg",
     "createdAt": 1767009703161
+  },
+  {
+    "id": "1767012734290",
+    "narration": "One night, a strange light flickered against my eyelids. It felt different from the usual pale shimmer of the moon. Driven by curiosity, I opened my eyes. Outside my window, a single beam of light descended from the heavens like a silken thread, landing on a remote hill at the edge of town.",
+    "illustration": "/data/story-atlas/1767012734290.jpg",
+    "createdAt": 1767012734290
   }
 ]
