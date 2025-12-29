@@ -33,6 +33,9 @@ const StoryAtlas: React.FC = () => {
   const [characterRef, setCharacterRef] = useState<string | null>(null);
   const [characterRefPreview, setCharacterRefPreview] = useState<string | null>(null);
   const [artStyle, setArtStyle] = useState('');
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [previewNarration, setPreviewNarration] = useState('');
+  const [submittingEntry, setSubmittingEntry] = useState(false);
 
   useEffect(() => {
     loadStories();
@@ -174,22 +177,50 @@ const StoryAtlas: React.FC = () => {
 
       const data = await response.json();
 
-      // Add new entry to the list
-      const newEntry: StoryEntry = {
-        id: Date.now().toString(),
-        narration,
-        illustration: data.illustration,
-        createdAt: Date.now(),
-      };
-
-      setEntries([...entries, newEntry]);
-      setNarration('');
-      alert('✅ Story entry added!');
+      // Set preview instead of adding to entries immediately
+      setPreviewImage(data.illustration);
+      setPreviewNarration(narration);
     } catch (error) {
       console.error('Error generating illustration:', error);
       alert('❌ Failed to generate illustration');
     }
     setGeneratingImage(false);
+  };
+
+  const handleSubmitEntry = async () => {
+    if (!previewImage || !previewNarration) return;
+
+    setSubmittingEntry(true);
+    try {
+      // Add new entry to the list
+      const newEntry: StoryEntry = {
+        id: Date.now().toString(),
+        narration: previewNarration,
+        illustration: previewImage,
+        createdAt: Date.now(),
+      };
+
+      setEntries([...entries, newEntry]);
+
+      // Clear form and preview
+      setNarration('');
+      setPreviewImage(null);
+      setPreviewNarration('');
+
+      alert('✅ Story entry added!');
+
+      // Reload stories to get the persisted version
+      await loadStories();
+    } catch (error) {
+      console.error('Error submitting entry:', error);
+      alert('❌ Failed to submit entry');
+    }
+    setSubmittingEntry(false);
+  };
+
+  const handleCancelPreview = () => {
+    setPreviewImage(null);
+    setPreviewNarration('');
   };
 
   const handleDeleteEntry = async (id: string) => {
@@ -344,15 +375,73 @@ const StoryAtlas: React.FC = () => {
               {generatingImage ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Generating...
+                  Generating Preview...
                 </>
               ) : (
                 <>
                   <ImagePlus className="w-4 h-4" />
-                  Generate Illustration & Add
+                  Generate Preview
                 </>
               )}
             </button>
+
+            {/* Preview Section */}
+            {previewImage && (
+              <div className="mt-6 p-6 bg-white border-2 border-green-300 rounded-sm">
+                <h3 className="text-lg font-bold text-green-900 mb-4">📸 Preview</h3>
+                <div className="flex flex-col md:flex-row gap-6">
+                  {/* Preview Image */}
+                  <div className="w-full md:w-1/2">
+                    <div className="aspect-square bg-stone-100 border border-stone-200 shadow-lg overflow-hidden">
+                      <img
+                        src={previewImage}
+                        alt="Preview"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Preview Narration */}
+                  <div className="w-full md:w-1/2 flex flex-col justify-between">
+                    <div>
+                      <label className="block text-xs font-bold text-stone-700 mb-2">Narration:</label>
+                      <p className="text-stone-700 leading-relaxed whitespace-pre-wrap font-serif" style={{ fontFamily: '"Crimson Text", "Georgia", serif' }}>
+                        {previewNarration}
+                      </p>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex gap-3 mt-6">
+                      <button
+                        onClick={handleSubmitEntry}
+                        disabled={submittingEntry}
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-green-600 text-white rounded-sm hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                      >
+                        {submittingEntry ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Submitting...
+                          </>
+                        ) : (
+                          <>
+                            <Save className="w-4 h-4" />
+                            Submit to Website
+                          </>
+                        )}
+                      </button>
+                      <button
+                        onClick={handleCancelPreview}
+                        disabled={submittingEntry}
+                        className="flex items-center gap-2 px-4 py-3 bg-stone-500 text-white rounded-sm hover:bg-stone-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <X className="w-4 h-4" />
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
