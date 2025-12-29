@@ -299,6 +299,49 @@ app.post('/api/story-atlas/generate', async (req, res) => {
 });
 
 /**
+ * Story Atlas: Update an entry's narration
+ */
+app.put('/api/story-atlas/entries/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { narration } = req.body;
+
+    if (!narration || !narration.trim()) {
+      return res.status(400).json({ error: 'Narration is required' });
+    }
+
+    // Load existing entries
+    let entries = [];
+    try {
+      const data = await fs.readFile(STORY_ENTRIES_FILE, 'utf-8');
+      entries = JSON.parse(data);
+    } catch (error) {
+      return res.status(404).json({ error: 'No entries found' });
+    }
+
+    // Find the entry to update
+    const entryIndex = entries.findIndex(e => e.id === id);
+    if (entryIndex === -1) {
+      return res.status(404).json({ error: 'Entry not found' });
+    }
+
+    // Update the narration
+    entries[entryIndex].narration = narration;
+
+    // Save updated entries
+    await fs.writeFile(
+      STORY_ENTRIES_FILE,
+      JSON.stringify(entries, null, 2)
+    );
+
+    res.json({ success: true, message: 'Narration updated successfully' });
+  } catch (error) {
+    console.error('Error updating narration:', error);
+    res.status(500).json({ error: 'Failed to update narration' });
+  }
+});
+
+/**
  * Story Atlas: Delete an entry
  */
 app.delete('/api/story-atlas/entries/:id', async (req, res) => {

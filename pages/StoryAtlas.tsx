@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Loader2, Lock, Save, ImagePlus, Upload, X, Trash2 } from 'lucide-react';
+import { Loader2, Lock, Save, ImagePlus, Upload, X, Trash2, Pencil } from 'lucide-react';
 
 interface StoryEntry {
   id: string;
@@ -36,6 +36,8 @@ const StoryAtlas: React.FC = () => {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [previewNarration, setPreviewNarration] = useState('');
   const [submittingEntry, setSubmittingEntry] = useState(false);
+  const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
+  const [editedNarration, setEditedNarration] = useState('');
 
   useEffect(() => {
     loadStories();
@@ -221,6 +223,45 @@ const StoryAtlas: React.FC = () => {
   const handleCancelPreview = () => {
     setPreviewImage(null);
     setPreviewNarration('');
+  };
+
+  const handleStartEdit = (id: string, currentNarration: string) => {
+    setEditingEntryId(id);
+    setEditedNarration(currentNarration);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingEntryId(null);
+    setEditedNarration('');
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingEntryId || !editedNarration.trim()) return;
+
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const response = await fetch(`${API_URL}/api/story-atlas/entries/${editingEntryId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ narration: editedNarration }),
+      });
+
+      if (!response.ok) throw new Error('Update failed');
+
+      // Update the entry in the local state
+      setEntries(entries.map(e =>
+        e.id === editingEntryId
+          ? { ...e, narration: editedNarration }
+          : e
+      ));
+
+      setEditingEntryId(null);
+      setEditedNarration('');
+      alert('✅ Narration updated successfully');
+    } catch (error) {
+      console.error('Error updating narration:', error);
+      alert('❌ Failed to update narration');
+    }
   };
 
   const handleDeleteEntry = async (id: string) => {
@@ -470,32 +511,74 @@ const StoryAtlas: React.FC = () => {
 
                   {/* Narration */}
                   <div className="w-full md:w-1/2">
-                    <div className="prose prose-stone max-w-none">
-                      <p className="text-stone-700 leading-relaxed whitespace-pre-wrap font-serif text-lg" style={{ fontFamily: '"Crimson Text", "Georgia", serif' }}>
-                        {entry.narration}
-                      </p>
-                    </div>
-                    <div className="mt-6 pt-4 border-t border-stone-200 flex items-center justify-between">
-                      <p className="text-xs text-stone-400">
-                        {new Date(entry.createdAt).toLocaleDateString(undefined, {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric'
-                        })}
-                      </p>
+                    {editingEntryId === entry.id ? (
+                      // Edit Mode
+                      <div>
+                        <label className="block text-xs font-bold text-stone-700 mb-2">Edit Narration:</label>
+                        <textarea
+                          value={editedNarration}
+                          onChange={(e) => setEditedNarration(e.target.value)}
+                          className="w-full h-48 p-4 border-2 border-blue-300 rounded-sm focus:border-blue-400 outline-none font-serif text-lg leading-relaxed"
+                          style={{ fontFamily: '"Crimson Text", "Georgia", serif' }}
+                        />
+                        <div className="flex gap-2 mt-4">
+                          <button
+                            onClick={handleSaveEdit}
+                            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-sm hover:bg-green-700 text-sm font-medium"
+                          >
+                            <Save className="w-4 h-4" />
+                            Save Changes
+                          </button>
+                          <button
+                            onClick={handleCancelEdit}
+                            className="flex items-center gap-2 px-4 py-2 bg-stone-500 text-white rounded-sm hover:bg-stone-600 text-sm"
+                          >
+                            <X className="w-4 h-4" />
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      // View Mode
+                      <>
+                        <div className="prose prose-stone max-w-none">
+                          <p className="text-stone-700 leading-relaxed whitespace-pre-wrap font-serif text-lg" style={{ fontFamily: '"Crimson Text", "Georgia", serif' }}>
+                            {entry.narration}
+                          </p>
+                        </div>
+                        <div className="mt-6 pt-4 border-t border-stone-200 flex items-center justify-between">
+                          <p className="text-xs text-stone-400">
+                            {new Date(entry.createdAt).toLocaleDateString(undefined, {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric'
+                            })}
+                          </p>
 
-                      {/* Delete button - Creator mode only */}
-                      {isCreatorMode && (
-                        <button
-                          onClick={() => handleDeleteEntry(entry.id)}
-                          className="flex items-center gap-2 px-3 py-2 bg-red-600 text-white rounded-sm hover:bg-red-700 shadow-md transition-all text-xs font-medium"
-                          title="Delete this entry"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                          Delete
-                        </button>
-                      )}
-                    </div>
+                          {/* Edit and Delete buttons - Creator mode only */}
+                          {isCreatorMode && (
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => handleStartEdit(entry.id, entry.narration)}
+                                className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-sm hover:bg-blue-700 shadow-md transition-all text-xs font-medium"
+                                title="Edit this entry"
+                              >
+                                <Pencil className="w-3 h-3" />
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleDeleteEntry(entry.id)}
+                                className="flex items-center gap-2 px-3 py-2 bg-red-600 text-white rounded-sm hover:bg-red-700 shadow-md transition-all text-xs font-medium"
+                                title="Delete this entry"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                                Delete
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
