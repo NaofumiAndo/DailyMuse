@@ -17,6 +17,7 @@ const STORY_ATLAS_DIR = path.join(__dirname, 'public', 'data', 'story-atlas');
 const STORY_ENTRIES_FILE = path.join(STORY_ATLAS_DIR, 'entries.json');
 const STORY_CHAR_REF_FILE = path.join(STORY_ATLAS_DIR, 'character-ref.json');
 const STORY_ART_STYLE_FILE = path.join(STORY_ATLAS_DIR, 'art-style.json');
+const STORIES_FILE = path.join(__dirname, 'public', 'data', 'stories.json');
 
 // Ensure directories exist
 await fs.mkdir(MUSES_DIR, { recursive: true });
@@ -462,6 +463,64 @@ app.delete('/api/story-atlas/entries/:id', async (req, res) => {
   } catch (error) {
     console.error('Error deleting story entry:', error);
     res.status(500).json({ error: 'Failed to delete story entry' });
+  }
+});
+
+/**
+ * Stories: Get all stories
+ */
+app.get('/api/stories', async (req, res) => {
+  try {
+    const data = await fs.readFile(STORIES_FILE, 'utf-8');
+    const stories = JSON.parse(data);
+    res.json(stories);
+  } catch (error) {
+    console.error('Error loading stories:', error);
+    res.status(500).json({ error: 'Failed to load stories' });
+  }
+});
+
+/**
+ * Stories: Update a story's metadata
+ */
+app.put('/api/stories/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, description } = req.body;
+
+    if (!title || !description) {
+      return res.status(400).json({ error: 'Title and description are required' });
+    }
+
+    // Load existing stories
+    let stories = [];
+    try {
+      const data = await fs.readFile(STORIES_FILE, 'utf-8');
+      stories = JSON.parse(data);
+    } catch (error) {
+      return res.status(404).json({ error: 'Stories file not found' });
+    }
+
+    // Find the story to update
+    const storyIndex = stories.findIndex(s => s.id === id);
+    if (storyIndex === -1) {
+      return res.status(404).json({ error: 'Story not found' });
+    }
+
+    // Update the story
+    stories[storyIndex].title = title;
+    stories[storyIndex].description = description;
+
+    // Save updated stories
+    await fs.writeFile(
+      STORIES_FILE,
+      JSON.stringify(stories, null, 2)
+    );
+
+    res.json({ success: true, message: 'Story updated successfully' });
+  } catch (error) {
+    console.error('Error updating story:', error);
+    res.status(500).json({ error: 'Failed to update story' });
   }
 });
 
