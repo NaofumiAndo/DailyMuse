@@ -85,23 +85,26 @@ Please provide your analysis in the following JSON format (respond ONLY with val
 
 {
   "pros": [
-    "list of exactly 5 advantages",
+    "list of exactly 5 advantages (strings)",
     "MUST include comments about market demand",
     "MUST include comments about feasibility",
     "can include other relevant pros"
   ],
   "cons": [
-    "list of exactly 5 disadvantages or challenges",
+    "list of exactly 5 disadvantages or challenges (strings)",
     "MUST include comments about market demand challenges",
     "MUST include comments about feasibility challenges",
     "can include other relevant cons"
   ],
   "similarProducts": [
-    "name and brief description of 5 similar existing products or services that can be found online",
-    "focus on real, known products that customers can actually find",
-    "include product name and what makes it similar"
+    {
+      "name": "Product Name",
+      "description": "Brief description of this similar product and why it's relevant"
+    }
   ]
 }
+
+For similarProducts: Provide exactly 5 objects with "name" and "description" fields. Focus on real, known products that customers can actually find online.
 
 Important: Ensure the analysis is balanced, realistic, and includes both market demand and technical/operational feasibility perspectives.`;
 
@@ -143,6 +146,13 @@ Important: Ensure the analysis is balanced, realistic, and includes both market 
     }
     if (!Array.isArray(analysis.similarProducts) || analysis.similarProducts.length !== 5) {
       throw new Error('Invalid similar products format - must be exactly 5 items');
+    }
+
+    // Validate that similarProducts are objects with name and description
+    for (const product of analysis.similarProducts) {
+      if (!product.name || !product.description) {
+        throw new Error('Each similar product must have "name" and "description" fields');
+      }
     }
 
     return analysis;

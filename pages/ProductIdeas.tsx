@@ -371,8 +371,15 @@ const ProductIdeas: React.FC = () => {
                       </h4>
                       <ul className="space-y-3">
                         {idea.similarProducts.map((product, idx) => (
-                          <li key={idx} className="p-3 bg-blue-50 border border-blue-200 rounded text-sm text-stone-700">
-                            {product}
+                          <li key={idx} className="p-3 bg-blue-50 border border-blue-200 rounded text-sm">
+                            {typeof product === 'string' ? (
+                              <div className="text-stone-700">{product}</div>
+                            ) : (
+                              <>
+                                <div className="font-bold text-blue-900 mb-1">{product.name}</div>
+                                <div className="text-stone-600">{product.description}</div>
+                              </>
+                            )}
                           </li>
                         ))}
                       </ul>
