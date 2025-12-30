@@ -1,4 +1,20 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenAI, Modality } from '@google/genai';
+import * as dotenv from 'dotenv';
+
+dotenv.config();
+
+const getFirstImageFromResponse = (response) => {
+  const candidates = response.candidates;
+  if (!candidates || candidates.length === 0) {
+    throw new Error("No candidates in response");
+  }
+  for (const part of candidates[0].content.parts) {
+    if (part.inlineData && part.inlineData.data) {
+      return part.inlineData.data;
+    }
+  }
+  throw new Error("No image generated.");
+};
 
 /**
  * Generate a product concept image using Gemini
@@ -9,43 +25,44 @@ export async function generateProductImage(productIdea) {
     throw new Error('GEMINI_API_KEY is not configured');
   }
 
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({
-    model: 'gemini-2.0-flash-exp-image',
-  });
+  const ai = new GoogleGenAI({ apiKey });
 
   const prompt = `Create a professional product concept visualization for the following idea:
 
-${productIdea}
+"${productIdea}"
 
-Style: Clean, modern, professional product photography style. High quality, well-lit, commercial product shot.`;
+Style Guidelines:
+- Clean, modern, professional product photography style
+- High quality, well-lit, commercial product shot
+- Realistic and detailed
+- Professional marketing presentation
+- Square format (1:1 aspect ratio)`;
 
   try {
-    const result = await model.generateContent(prompt);
-    const response = result.response;
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash-image',
+      contents: prompt,
+      config: {
+        responseModalities: [Modality.IMAGE],
+        imageConfig: {
+          aspectRatio: "1:1"
+        }
+      }
+    });
 
-    if (!response.candidates || response.candidates.length === 0) {
-      throw new Error('No image generated');
-    }
-
-    const candidate = response.candidates[0];
-    if (!candidate.content || !candidate.content.parts) {
-      throw new Error('Invalid response structure');
-    }
-
-    // Find the inline data part
-    const imagePart = candidate.content.parts.find(
-      (part) => part.inlineData && part.inlineData.mimeType
-    );
-
-    if (!imagePart || !imagePart.inlineData) {
-      throw new Error('No image data in response');
-    }
-
-    return imagePart.inlineData.data;
+    return getFirstImageFromResponse(response);
   } catch (error) {
     console.error('Error generating product image:', error);
-    throw error;
+
+    if (error?.message?.includes('API key')) {
+      throw new Error("Invalid API key. Please check your Gemini API key configuration.");
+    } else if (error?.message?.includes('quota') || error?.message?.includes('limit')) {
+      throw new Error("API quota exceeded. Please check your billing or try again later.");
+    } else if (error?.message?.includes('safety') || error?.message?.includes('blocked')) {
+      throw new Error("Content was blocked by safety filters. Try modifying your product idea.");
+    }
+
+    throw new Error(error?.message || "Failed to generate product image. Please try again.");
   }
 }
 
@@ -58,10 +75,7 @@ export async function analyzeProductIdea(productIdea) {
     throw new Error('GEMINI_API_KEY is not configured');
   }
 
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({
-    model: 'gemini-2.0-flash-exp',
-  });
+  const ai = new GoogleGenAI({ apiKey });
 
   const prompt = `Analyze the following product idea and provide a structured analysis:
 
@@ -92,9 +106,23 @@ Please provide your analysis in the following JSON format (respond ONLY with val
 Important: Ensure the analysis is balanced, realistic, and includes both market demand and technical/operational feasibility perspectives.`;
 
   try {
-    const result = await model.generateContent(prompt);
-    const response = result.response;
-    const text = response.text();
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.0-flash-exp',
+      contents: prompt
+    });
+
+    // Extract text from response
+    const candidates = response.candidates;
+    if (!candidates || candidates.length === 0) {
+      throw new Error("No response generated");
+    }
+
+    let text = '';
+    for (const part of candidates[0].content.parts) {
+      if (part.text) {
+        text += part.text;
+      }
+    }
 
     // Extract JSON from response (remove markdown code blocks if present)
     let jsonText = text.trim();
@@ -120,6 +148,13 @@ Important: Ensure the analysis is balanced, realistic, and includes both market 
     return analysis;
   } catch (error) {
     console.error('Error analyzing product idea:', error);
-    throw error;
+
+    if (error?.message?.includes('API key')) {
+      throw new Error("Invalid API key. Please check your Gemini API key configuration.");
+    } else if (error?.message?.includes('quota') || error?.message?.includes('limit')) {
+      throw new Error("API quota exceeded. Please check your billing or try again later.");
+    }
+
+    throw new Error(error?.message || "Failed to analyze product idea. Please try again.");
   }
 }
