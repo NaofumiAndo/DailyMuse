@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { HashRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
 import ComicSection from './pages/ComicSection';
+import StoryList from './pages/StoryList';
 import StoryAtlas from './pages/StoryAtlas';
 import { Menu, X } from 'lucide-react';
 
@@ -8,11 +9,11 @@ const Sidebar: React.FC = () => {
   const location = useLocation();
 
   const isComicSection = ['/', '/archive', '/admin'].includes(location.pathname);
-  const isStorySection = location.pathname === '/story-atlas';
+  const isStorySection = location.pathname.startsWith('/story');
 
   const navLinks = [
     { path: '/', label: '4-Panel Comic', icon: '🎨', isActive: isComicSection },
-    { path: '/story-atlas', label: 'Story: Atlas', icon: '📖', isActive: isStorySection },
+    { path: '/story', label: 'Story', icon: '📖', isActive: isStorySection },
   ];
 
   return (
@@ -59,7 +60,7 @@ const Navigation: React.FC = () => {
 
   const navLinks = [
     { path: '/', label: '4-Panel Comic' },
-    { path: '/story-atlas', label: 'Story: Atlas' },
+    { path: '/story', label: 'Story' },
   ];
 
   return (
@@ -156,7 +157,8 @@ export default function App() {
           <main className="flex-grow pt-20 md:pt-0">
             <Routes>
               <Route path="/*" element={<ComicSection />} />
-              <Route path="/story-atlas" element={<StoryAtlas />} />
+              <Route path="/story" element={<StoryList />} />
+              <Route path="/story/atlas" element={<StoryAtlas />} />
             </Routes>
           </main>
 
