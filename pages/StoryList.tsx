@@ -36,11 +36,20 @@ const StoryList: React.FC = () => {
         ? `${API_URL}/api/stories`
         : `${import.meta.env.BASE_URL}data/stories.json`;
 
+      console.log('Loading stories from:', url);
       const response = await fetch(url);
+      console.log('Response status:', response.status);
+
+      if (!response.ok) {
+        throw new Error(`Failed to load stories: ${response.status} ${response.statusText}`);
+      }
+
       const data = await response.json();
+      console.log('Loaded stories:', data);
       setStories(data);
     } catch (error) {
       console.error('Error loading stories:', error);
+      alert(`Failed to load stories: ${error.message}`);
     } finally {
       setLoading(false);
     }
