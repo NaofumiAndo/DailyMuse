@@ -18,10 +18,13 @@ const STORY_ENTRIES_FILE = path.join(STORY_ATLAS_DIR, 'entries.json');
 const STORY_CHAR_REF_FILE = path.join(STORY_ATLAS_DIR, 'character-ref.json');
 const STORY_ART_STYLE_FILE = path.join(STORY_ATLAS_DIR, 'art-style.json');
 const STORIES_FILE = path.join(__dirname, 'public', 'data', 'stories.json');
+const PRODUCT_IDEAS_FILE = path.join(__dirname, 'public', 'data', 'product-ideas.json');
+const PRODUCT_IMAGES_DIR = path.join(__dirname, 'public', 'data', 'product-images');
 
 // Ensure directories exist
 await fs.mkdir(MUSES_DIR, { recursive: true });
 await fs.mkdir(STORY_ATLAS_DIR, { recursive: true });
+await fs.mkdir(PRODUCT_IMAGES_DIR, { recursive: true });
 
 /**
  * Save a muse entry (images + metadata)
@@ -521,6 +524,114 @@ app.put('/api/stories/:id', async (req, res) => {
   } catch (error) {
     console.error('Error updating story:', error);
     res.status(500).json({ error: 'Failed to update story' });
+  }
+});
+
+/**
+ * Product Ideas: Generate product image
+ */
+app.post('/api/product-ideas/generate-image', async (req, res) => {
+  try {
+    const { idea } = req.body;
+
+    if (!idea) {
+      return res.status(400).json({ error: 'Product idea is required' });
+    }
+
+    // Import Gemini functions
+    const { generateProductImage } = await import('./services/gemini-product.js');
+
+    // Generate image
+    const imageData = await generateProductImage(idea);
+
+    res.json({
+      success: true,
+      image: `data:image/jpeg;base64,${imageData}`
+    });
+  } catch (error) {
+    console.error('Error generating product image:', error);
+    res.status(500).json({ error: error.message || 'Failed to generate product image' });
+  }
+});
+
+/**
+ * Product Ideas: Submit and analyze product idea
+ */
+app.post('/api/product-ideas/submit', async (req, res) => {
+  try {
+    const { idea, image } = req.body;
+
+    if (!idea || !image) {
+      return res.status(400).json({ error: 'Idea and image are required' });
+    }
+
+    // Import Gemini functions
+    const { analyzeProductIdea } = await import('./services/gemini-product.js');
+
+    // Analyze the idea (get pros, cons, similar products)
+    const analysis = await analyzeProductIdea(idea);
+
+    // Save product image
+    const timestamp = Date.now();
+    const filename = `${timestamp}.jpg`;
+    const base64Data = image.replace(/^data:image\/\w+;base64,/, '');
+    const buffer = Buffer.from(base64Data, 'base64');
+
+    await fs.writeFile(
+      path.join(PRODUCT_IMAGES_DIR, filename),
+      buffer
+    );
+
+    // Load existing product ideas
+    let ideas = [];
+    try {
+      const data = await fs.readFile(PRODUCT_IDEAS_FILE, 'utf-8');
+      ideas = JSON.parse(data);
+    } catch (error) {
+      // File doesn't exist yet
+    }
+
+    // Add new product idea
+    const newIdea = {
+      id: timestamp.toString(),
+      idea,
+      image: `/data/product-images/${filename}`,
+      pros: analysis.pros,
+      cons: analysis.cons,
+      similarProducts: analysis.similarProducts,
+      createdAt: timestamp
+    };
+
+    ideas.unshift(newIdea); // Add to beginning
+
+    // Save updated product ideas
+    await fs.writeFile(
+      PRODUCT_IDEAS_FILE,
+      JSON.stringify(ideas, null, 2)
+    );
+
+    res.json({
+      success: true,
+      message: 'Product idea submitted successfully',
+      idea: newIdea
+    });
+  } catch (error) {
+    console.error('Error submitting product idea:', error);
+    res.status(500).json({ error: error.message || 'Failed to submit product idea' });
+  }
+});
+
+/**
+ * Product Ideas: Get all product ideas
+ */
+app.get('/api/product-ideas', async (req, res) => {
+  try {
+    const data = await fs.readFile(PRODUCT_IDEAS_FILE, 'utf-8');
+    const ideas = JSON.parse(data);
+    res.json(ideas);
+  } catch (error) {
+    console.error('Error loading product ideas:', error);
+    res.status(500).json({ error: 'Failed to load product ideas' });
   }
 });
 

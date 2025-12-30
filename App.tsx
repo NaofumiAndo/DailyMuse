@@ -3,6 +3,7 @@ import { HashRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
 import ComicSection from './pages/ComicSection';
 import StoryList from './pages/StoryList';
 import StoryAtlas from './pages/StoryAtlas';
+import ProductIdeas from './pages/ProductIdeas';
 import { Menu, X } from 'lucide-react';
 
 const Sidebar: React.FC = () => {
@@ -10,10 +11,12 @@ const Sidebar: React.FC = () => {
 
   const isComicSection = ['/', '/archive', '/admin'].includes(location.pathname);
   const isStorySection = location.pathname.startsWith('/story');
+  const isProductIdeas = location.pathname === '/product-ideas';
 
   const navLinks = [
     { path: '/', label: '4-Panel Comic', icon: '🎨', isActive: isComicSection },
     { path: '/story', label: 'Story', icon: '📖', isActive: isStorySection },
+    { path: '/product-ideas', label: 'Product Ideas', icon: '💡', isActive: isProductIdeas },
   ];
 
   return (
@@ -61,6 +64,7 @@ const Navigation: React.FC = () => {
   const navLinks = [
     { path: '/', label: '4-Panel Comic' },
     { path: '/story', label: 'Story' },
+    { path: '/product-ideas', label: 'Product Ideas' },
   ];
 
   return (
@@ -159,6 +163,7 @@ export default function App() {
               <Route path="/*" element={<ComicSection />} />
               <Route path="/story" element={<StoryList />} />
               <Route path="/story/atlas" element={<StoryAtlas />} />
+              <Route path="/product-ideas" element={<ProductIdeas />} />
             </Routes>
           </main>
 
