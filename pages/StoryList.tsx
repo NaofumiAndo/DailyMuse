@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { BookOpen, Lock, LogOut, Edit2, Save, X } from 'lucide-react';
 
 const API_URL = import.meta.env.DEV ? 'http://localhost:3001' : '';
-const CREATOR_PASSWORD = import.meta.env.VITE_CREATOR_PASSWORD || 'create';
+const CREATOR_PASSWORD = import.meta.env.VITE_CREATOR_PASSWORD;
 
 interface Story {
   id: string;

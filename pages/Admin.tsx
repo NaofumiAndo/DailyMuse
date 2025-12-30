@@ -5,7 +5,7 @@ import { GenerationStatus, MuseEntry } from '../types';
 import { Wand2, CalendarCheck, CheckCircle2, Settings, X, ArrowRight, Image as ImageIcon, ChevronLeft, Loader2, LogOut, Edit2, Save } from 'lucide-react';
 
 // Simple password authentication
-const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || 'admin123';
+const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD;
 
 const Admin: React.FC = () => {
   // Auth & API

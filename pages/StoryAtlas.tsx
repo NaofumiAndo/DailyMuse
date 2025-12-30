@@ -8,7 +8,7 @@ interface StoryEntry {
   createdAt: number;
 }
 
-const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || 'admin123';
+const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD;
 const BASE_PATH = import.meta.env.BASE_URL || '/';
 
 // Helper function to get full path for assets
