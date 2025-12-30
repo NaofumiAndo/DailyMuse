@@ -376,7 +376,7 @@ const StoryAtlas: React.FC = () => {
       {/* Page Header */}
       <div className="bg-white border-b border-stone-200 py-12">
         <div className="max-w-6xl mx-auto px-6">
-          <h1 className="text-5xl font-serif text-stone-900 mb-2">Story: Atlas</h1>
+          <h1 className="text-5xl font-serif text-stone-900 mb-2">Atlas: The Boy Who Held the Sky</h1>
           <p className="text-stone-500 text-sm">An illustrated narrative journey</p>
         </div>
       </div>

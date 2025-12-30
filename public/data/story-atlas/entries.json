@@ -1,7 +1,7 @@
 [
   {
     "id": "1767005208612",
-    "narration": "It was a night when the stars shone beautifully. I remember a boy once standing atop a hill on a night like this. It is a memory so distant it feels less like nostalgia and more like a half-forgotten dream.",
+    "narration": "It was a night when the stars shone beautifully. I remember a boy once standing atop a hill on a night like this. It is a memory so distant it feels more like a half-forgotten dream.",
     "illustration": "/data/story-atlas/1767005208612.jpg",
     "createdAt": 1767005208612
   },
@@ -22,5 +22,17 @@
     "narration": "I watched until the glow began to fade. By the time I rubbed my sleepy eyes, it was gone. Still half-dreaming, I slipped out of the house and made my way toward the outskirts of town.",
     "illustration": "/data/story-atlas/1767013150797.jpg",
     "createdAt": 1767013150797
+  },
+  {
+    "id": "1767089755254",
+    "narration": "As I climbed the hill, I saw him—a boy who looked to be about my age. Despite the summer season, the air at this altitude turned biting once the sun went down. Yet, he wore nothing but a single layer of tattered, thin clothes. He didn't seem to feel the cold at all.",
+    "illustration": "/data/story-atlas/1767089755254.jpg",
+    "createdAt": 1767089755254
+  },
+  {
+    "id": "1767089932294",
+    "narration": "\"Hello there,\" he said.\nHe raised a hand in greeting the moment he saw me cresting the ridge. His simple, honest smile instantly dissolved my wariness. I ended up staying there with him until the sun rose. After that night, I found myself returning to the hill again and again just to see him.",
+    "illustration": "/data/story-atlas/1767089932294.jpg",
+    "createdAt": 1767089932294
   }
 ]
