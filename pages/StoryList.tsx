@@ -34,7 +34,7 @@ const StoryList: React.FC = () => {
       // In development, load from API
       const url = import.meta.env.DEV
         ? `${API_URL}/api/stories`
-        : '/data/stories.json';
+        : `${import.meta.env.BASE_URL}data/stories.json`;
 
       const response = await fetch(url);
       const data = await response.json();
