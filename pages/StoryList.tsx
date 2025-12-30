@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { BookOpen, Lock, LogOut, Edit2, Save, X } from 'lucide-react';
 
 const API_URL = import.meta.env.DEV ? 'http://localhost:3001' : '';
+const CREATOR_PASSWORD = import.meta.env.VITE_CREATOR_PASSWORD || 'create';
 
 interface Story {
   id: string;
@@ -29,7 +30,13 @@ const StoryList: React.FC = () => {
 
   const loadStories = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/stories`);
+      // In production (GitHub Pages), load from static JSON file
+      // In development, load from API
+      const url = import.meta.env.DEV
+        ? `${API_URL}/api/stories`
+        : '/data/stories.json';
+
+      const response = await fetch(url);
       const data = await response.json();
       setStories(data);
     } catch (error) {
@@ -40,7 +47,7 @@ const StoryList: React.FC = () => {
   };
 
   const handleLogin = () => {
-    if (password === 'create') {
+    if (password === CREATOR_PASSWORD) {
       setIsCreator(true);
       setPassword('');
     } else {
@@ -68,6 +75,12 @@ const StoryList: React.FC = () => {
   const handleSaveEdit = async (storyId: string) => {
     if (!editTitle.trim() || !editDescription.trim()) {
       alert('Title and description cannot be empty');
+      return;
+    }
+
+    // Creator mode only works in development
+    if (!import.meta.env.DEV) {
+      alert('Creator mode is only available in development. Please run the local server to edit stories.');
       return;
     }
 
