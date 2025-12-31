@@ -1,5 +1,47 @@
 [
   {
+    "id": "1767171147333",
+    "idea": "an app that provides you with the best plan(menu,  purchase plan) based on nutrition, cost, and time consumption. The app will use delivery data etc. to get the products and costs of goods. The user will be able to customize the plan based on their preferences.\n",
+    "image": "/data/product-images/1767171147333.jpg",
+    "pros": [
+      "Addresses a clear consumer need for meal planning, healthy eating, and cost savings, indicating potentially high market demand.",
+      "Customization allows users to tailor the plan to their specific dietary needs, preferences, and budget, enhancing user satisfaction and adoption.",
+      "Leveraging delivery data for product pricing and availability makes the app dynamic and relevant, increasing feasibility and accuracy of recommendations.",
+      "Time-saving aspect appeals to busy individuals seeking convenient meal solutions, increasing the app's value proposition.",
+      "Potential for integration with wearable devices and health trackers to further personalize recommendations and track progress, adding value and market competitiveness."
+    ],
+    "cons": [
+      "Aggregating and maintaining accurate delivery data across various providers is technically challenging and requires continuous updates and API integrations, impacting feasibility.",
+      "User adoption hinges on trust in the app's nutritional recommendations and cost-effectiveness, which requires transparency and rigorous testing to combat market demand challenges.",
+      "Competition from existing meal planning apps and recipe databases is intense, requiring a strong unique selling proposition to gain market share, impacting market demand.",
+      "Data privacy concerns regarding user preferences, dietary restrictions, and purchasing habits must be addressed, adding complexity and potential regulatory hurdles, impacting feasibility.",
+      "Accurate prediction of food costs considering real-time fluctuations and delivery fees poses a significant technical challenge, potentially leading to inaccurate plans and dissatisfied users, impacting feasibility and market demand."
+    ],
+    "similarProducts": [
+      {
+        "name": "Mealime",
+        "description": "A meal planning app that generates recipes and grocery lists based on user preferences and dietary restrictions. Relevant because it offers similar meal planning and grocery list generation functionality."
+      },
+      {
+        "name": "Yummly",
+        "description": "A recipe app that provides personalized recipe recommendations based on user preferences and dietary needs. Relevant as a competitor in the recipe and meal suggestion space."
+      },
+      {
+        "name": "PlateJoy",
+        "description": "A personalized meal planning service that provides recipes and grocery lists based on user preferences and dietary restrictions. Includes registered dietitians for expert advice. Relevant due to its personalized planning and dietitian integration."
+      },
+      {
+        "name": "HelloFresh",
+        "description": "A meal kit delivery service that provides pre-portioned ingredients and recipes for convenient home cooking. Relevant as an alternative solution for convenient meal preparation, addressing similar needs but with a different business model."
+      },
+      {
+        "name": "Allrecipes Dinner Spinner",
+        "description": "A recipe app that helps users find recipes based on ingredients they have on hand or dishes they want to cook. Relevant for its broad recipe database and focus on ingredient-based searching."
+      }
+    ],
+    "createdAt": 1767171147333
+  },
+  {
     "id": "1767129133415",
     "idea": "an app that provides you with the best plan(menu,  purchase plan) based on nutrition, cost, and time consumption. The app will use delivery data etc. to get the products and costs of goods. The user will be able to customize the plan based on their preferences.",
     "image": "/data/product-images/1767129133415.jpg",
