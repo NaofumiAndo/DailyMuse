@@ -37,7 +37,7 @@
   },
   {
     "id": "1767090821269",
-    "narration": "\"Good evening. You came back,\" he would say, greeting me formally every time I reached the summit. I would offer a small, shy reply.\n\"The stars are beautiful again tonight,\" he’d remark.\nHe only ever appeared on nights when the stars were bright.",
+    "narration": "\"Good evening. You came back,\" he would say, greeting me formally every time I reached the summit. I would offer a small, shy reply.\n\"The stars are beautiful again tonight,\" he’d remark. He only ever appeared on nights when the stars were bright.",
     "illustration": "/data/story-atlas/1767090821269.jpg",
     "createdAt": 1767090821269
   },
@@ -190,5 +190,35 @@
     "narration": "\"You'll be alright,\" he said softly, trying to calm me. \"And listen—I have a plan for when I get back. I’m going to move the stars! Since I’ll be holding them up with my own hands, moving them a little will be easy.\"",
     "illustration": "/data/story-atlas/1767195491063.jpg",
     "createdAt": 1767195491063
+  },
+  {
+    "id": "1767275019514",
+    "narration": "\"I’ll make a window in the sky so I can always watch over you, and so you can always peek in on me. When I’m gone, just hold your hands up to the night sky. If you look through them, we’ll be able to see each other. Our worlds will always be connected by this sky.\"",
+    "illustration": "/data/story-atlas/1767275019514.jpg",
+    "createdAt": 1767275019514
+  },
+  {
+    "id": "1767275160779",
+    "narration": "He lightly patted my sobbing head, whispered a final \"Goodbye,\" and vanished into the starlight.",
+    "illustration": "/data/story-atlas/1767275160779.jpg",
+    "createdAt": 1767275160779
+  },
+  {
+    "id": "1767275618677",
+    "narration": "Ever since that night, I have gone to the hill every time the stars are out. Even though I know he won't come, it is something I must do. Each time, I raise my hands to the sky and peer through my fingers, I see three bright stars forming a great triangle.",
+    "illustration": "/data/story-atlas/1767275618677.jpg",
+    "createdAt": 1767275618677
+  },
+  {
+    "id": "1767346914492",
+    "narration": "It is the window he made for me. He is still out there, somewhere beyond that sky, living his truth. And so, I look through the window to help him hold up the sky he sees. Under this same sky, I will stay here—always—to be the strength he needs to carry his weight.",
+    "illustration": "/data/story-atlas/1767346914492.jpg",
+    "createdAt": 1767346914492
+  },
+  {
+    "id": "1767347071597",
+    "narration": "The End",
+    "illustration": "/data/story-atlas/1767347071597.jpg",
+    "createdAt": 1767347071597
   }
 ]
