@@ -510,7 +510,8 @@ const Admin: React.FC = () => {
                   <p className="text-stone-500 text-xs mt-2">Create your first comic above to get started</p>
               </div>
           ) : (
-              <div className="space-y-2">
+              <div className="max-h-[1200px] overflow-y-auto border border-stone-200 rounded-sm bg-stone-50 p-4">
+                <div className="space-y-2">
                   {existingMuses.map(m => (
               <div key={m.scheduledDate} className="py-3 border-b border-stone-100">
                   {editingDate === m.scheduledDate ? (
@@ -591,6 +592,7 @@ const Admin: React.FC = () => {
                   )}
               </div>
                   ))}
+                </div>
               </div>
           )}
       </div>
