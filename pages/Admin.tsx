@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { generateTitleImage, generateComic } from '../services/gemini';
+import { generateTitleImage, generateComic, refinePromptWithFeedback, editExistingImage } from '../services/gemini';
 import { saveMuseEntry, checkDateConflict, getAllEntries, deleteMuseEntry, updateEntryDate } from '../services/githubStorage';
 import { GenerationStatus, MuseEntry } from '../types';
-import { Wand2, CalendarCheck, CheckCircle2, Settings, X, ArrowRight, Image as ImageIcon, ChevronLeft, Loader2, LogOut, Edit2, Save } from 'lucide-react';
+import { Wand2, CalendarCheck, CheckCircle2, Settings, X, ArrowRight, Image as ImageIcon, ChevronLeft, Loader2, LogOut, Edit2, Save, Sparkles } from 'lucide-react';
 
 // Simple password authentication
 const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD;
@@ -26,16 +26,23 @@ const Admin: React.FC = () => {
   const [title, setTitle] = useState('');
   const [episodeNumber, setEpisodeNumber] = useState('');
   const [concept, setConcept] = useState('');
-  
+
   // Images
   const [generatedTitleImage, setGeneratedTitleImage] = useState<string | null>(null);
   const [generatedComicImage, setGeneratedComicImage] = useState<string | null>(null);
-  
+
   // Operational State
   const [status, setStatus] = useState<GenerationStatus>(GenerationStatus.IDLE);
   const [scheduledDate, setScheduledDate] = useState('');
   const [dateError, setDateError] = useState('');
   const [generationError, setGenerationError] = useState('');
+
+  // Prompt Refinement State
+  const [feedback, setFeedback] = useState('');
+  const [isRefining, setIsRefining] = useState(false);
+
+  // One-time Instructions State
+  const [oneTimeInstructions, setOneTimeInstructions] = useState('');
 
   // Management List
   const [existingMuses, setExistingMuses] = useState<MuseEntry[]>([]);
@@ -130,14 +137,68 @@ const Admin: React.FC = () => {
     setGenerationError('');
     setStatus(GenerationStatus.GENERATING_COMIC);
     try {
-      const imageBytes = await generateComic(concept, characterDesc);
-      setGeneratedComicImage(`data:image/jpeg;base64,${imageBytes}`);
+      const result = await generateComic(concept, characterDesc);
+      setGeneratedComicImage(`data:image/jpeg;base64,${result.imageData}`);
       setStatus(GenerationStatus.IDLE);
+
+      // Save prompt history to local file (only if scheduled date is available)
+      if (scheduledDate) {
+        try {
+          const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+          await fetch(`${API_URL}/api/muses/prompt-history`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              scheduledDate,
+              fullPrompt: result.fullPrompt,
+              timestamp: Date.now()
+            })
+          });
+        } catch (historyError) {
+          console.error("Failed to save prompt history:", historyError);
+          // Don't fail the whole operation if history save fails
+        }
+      }
     } catch (error: any) {
       console.error("Failed to generate comic", error);
       const errorMessage = error?.message || error?.toString() || "Failed to generate comic. Please check your API key and try again.";
       setGenerationError(errorMessage);
       setStatus(GenerationStatus.ERROR);
+    }
+  };
+
+  const handleRegenerateWithTweaks = async () => {
+    if (!oneTimeInstructions.trim() || !generatedComicImage) return;
+    setGenerationError('');
+    setStatus(GenerationStatus.GENERATING_COMIC);
+    try {
+      const editedImageBytes = await editExistingImage(generatedComicImage, oneTimeInstructions);
+      setGeneratedComicImage(`data:image/jpeg;base64,${editedImageBytes}`);
+      setStatus(GenerationStatus.IDLE);
+      setOneTimeInstructions(''); // Clear after successful edit
+    } catch (error: any) {
+      console.error("Failed to edit image", error);
+      const errorMessage = error?.message || error?.toString() || "Failed to edit image. Please try again.";
+      setGenerationError(errorMessage);
+      setStatus(GenerationStatus.ERROR);
+    }
+  };
+
+  const handleRefinePrompt = async () => {
+    if (!feedback.trim() || !concept) return;
+    setGenerationError('');
+    setIsRefining(true);
+    try {
+      const refinedPrompt = await refinePromptWithFeedback(concept, feedback);
+      setConcept(refinedPrompt);
+      setFeedback('');
+      setGeneratedComicImage(null); // Clear image since concept changed
+      setIsRefining(false);
+    } catch (error: any) {
+      console.error("Failed to refine prompt", error);
+      const errorMessage = error?.message || error?.toString() || "Failed to refine prompt. Please try again.";
+      setGenerationError(errorMessage);
+      setIsRefining(false);
     }
   };
 
@@ -242,6 +303,8 @@ const Admin: React.FC = () => {
     setStatus(GenerationStatus.IDLE);
     setScheduledDate('');
     setGenerationError('');
+    setFeedback('');
+    setOneTimeInstructions('');
   };
 
   if (authLoading) {
@@ -390,7 +453,7 @@ const Admin: React.FC = () => {
 
                     <div>
                         <label className="block text-xs font-bold text-stone-400 uppercase tracking-wider mb-2">Episode Story / Concept</label>
-                        <textarea 
+                        <textarea
                             value={concept}
                             onChange={(e) => setConcept(e.target.value)}
                             placeholder="Describe the 4 panels of the comic..."
@@ -399,12 +462,60 @@ const Admin: React.FC = () => {
                     </div>
 
                     <button
-                        onClick={handleGenerateComic}
+                        onClick={() => handleGenerateComic()}
                         disabled={status === GenerationStatus.GENERATING_COMIC || !concept}
                         className="w-full bg-stone-900 text-white py-3 font-bold uppercase text-xs hover:bg-stone-800 flex items-center justify-center"
                     >
                          {status === GenerationStatus.GENERATING_COMIC ? <LoaderWrapper /> : <><Wand2 className="w-4 h-4 mr-2"/> Generate 4-Panel Comic</>}
                     </button>
+
+                    {/* Feedback Section */}
+                    {generatedComicImage && (
+                        <div className="border-t border-stone-200 pt-4 space-y-4">
+                            {/* Quick Fixes - One-time Tweaks */}
+                            <div className="bg-amber-50 border border-amber-200 rounded-sm p-4 space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <label className="block text-xs font-bold text-amber-700 uppercase tracking-wider">Quick Fixes (One-time only)</label>
+                                    <span className="text-[10px] text-amber-600 font-medium">Won't change base prompt</span>
+                                </div>
+                                <textarea
+                                    value={oneTimeInstructions}
+                                    onChange={(e) => setOneTimeInstructions(e.target.value)}
+                                    placeholder="e.g., 'Fix spelling in panel 2' or 'Make text bigger in panel 3'"
+                                    className="w-full h-16 p-3 bg-white border border-amber-300 focus:border-amber-500 outline-none text-xs resize-none"
+                                />
+                                <button
+                                    onClick={handleRegenerateWithTweaks}
+                                    disabled={status === GenerationStatus.GENERATING_COMIC || !oneTimeInstructions.trim()}
+                                    className="w-full bg-amber-600 text-white py-2 font-medium text-xs hover:bg-amber-700 flex items-center justify-center disabled:opacity-50"
+                                >
+                                    {status === GenerationStatus.GENERATING_COMIC ? <LoaderWrapper /> : <><Edit2 className="w-3 h-3 mr-2"/> Apply Quick Fix to Image</>}
+                                </button>
+                                <p className="text-[10px] text-amber-600 italic">Edits the current image only - doesn't change your base prompt</p>
+                            </div>
+
+                            {/* Permanent Update - Refine Base Prompt */}
+                            <div className="bg-blue-50 border border-blue-200 rounded-sm p-4 space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <label className="block text-xs font-bold text-blue-700 uppercase tracking-wider">Update Base Prompt (Permanent)</label>
+                                </div>
+                                <textarea
+                                    value={feedback}
+                                    onChange={(e) => setFeedback(e.target.value)}
+                                    placeholder="e.g., 'Make the character more expressive' or 'Simplify the story'"
+                                    className="w-full h-20 p-3 bg-white border border-blue-300 focus:border-blue-500 outline-none text-xs resize-none"
+                                />
+                                <button
+                                    onClick={handleRefinePrompt}
+                                    disabled={isRefining || !feedback.trim()}
+                                    className="w-full bg-blue-600 text-white py-2 font-medium text-xs hover:bg-blue-700 flex items-center justify-center disabled:opacity-50"
+                                >
+                                    {isRefining ? <LoaderWrapper /> : <><Sparkles className="w-3 h-3 mr-2"/> Update Prompt with AI</>}
+                                </button>
+                                <p className="text-[10px] text-blue-600 italic">Use this to improve the base prompt for all future generations. Full prompts are saved to local files.</p>
+                            </div>
+                        </div>
+                    )}
 
                     {generationError && currentStep === 1 && (
                         <div className="bg-red-50 border border-red-200 p-4 rounded-sm">

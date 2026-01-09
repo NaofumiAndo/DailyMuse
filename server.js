@@ -27,6 +27,44 @@ await fs.mkdir(STORY_ATLAS_DIR, { recursive: true });
 await fs.mkdir(PRODUCT_IMAGES_DIR, { recursive: true });
 
 /**
+ * Save prompt history for a muse entry
+ */
+app.post('/api/muses/prompt-history', async (req, res) => {
+  try {
+    const { scheduledDate, fullPrompt, timestamp } = req.body;
+
+    if (!scheduledDate || !fullPrompt) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    const historyFile = path.join(MUSES_DIR, `${scheduledDate}-prompt-history.json`);
+
+    // Load existing history or create new
+    let history = [];
+    try {
+      const existingData = await fs.readFile(historyFile, 'utf-8');
+      history = JSON.parse(existingData);
+    } catch (error) {
+      // File doesn't exist yet, will create new
+    }
+
+    // Add new prompt to history
+    history.push({
+      timestamp: timestamp || Date.now(),
+      prompt: fullPrompt
+    });
+
+    // Save updated history
+    await fs.writeFile(historyFile, JSON.stringify(history, null, 2));
+
+    res.json({ success: true, message: 'Prompt history saved' });
+  } catch (error) {
+    console.error('Error saving prompt history:', error);
+    res.status(500).json({ error: 'Failed to save prompt history' });
+  }
+});
+
+/**
  * Save a muse entry (images + metadata)
  */
 app.post('/api/muses', async (req, res) => {
