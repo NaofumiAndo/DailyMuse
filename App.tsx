@@ -14,9 +14,10 @@ const Sidebar: React.FC = () => {
   const isProductIdeas = location.pathname === '/product-ideas';
 
   const navLinks = [
-    { path: '/', label: '4-Panel Comic', icon: '🎨', isActive: isComicSection },
-    { path: '/story', label: 'Story', icon: '📖', isActive: isStorySection },
-    { path: '/product-ideas', label: 'Product Ideas', icon: '💡', isActive: isProductIdeas },
+    { path: '/', label: '4-Panel Comic', icon: '🎨', isActive: isComicSection, isExternal: false },
+    { path: '/story', label: 'Story', icon: '📖', isActive: isStorySection, isExternal: false },
+    { path: '/product-ideas', label: 'Product Ideas', icon: '💡', isActive: isProductIdeas, isExternal: false },
+    { path: 'https://tsume-basketball.vercel.app/', label: 'TSUME-BASKETBALL', icon: '🏀', isActive: false, isExternal: true },
   ];
 
   return (
@@ -33,17 +34,29 @@ const Sidebar: React.FC = () => {
         <ul className="space-y-2">
           {navLinks.map((link) => (
             <li key={link.path}>
-              <Link
-                to={link.path}
-                className={`flex items-center gap-3 px-4 py-3 rounded-sm transition-all ${
-                  link.isActive
-                    ? 'bg-stone-900 text-white'
-                    : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
-                }`}
-              >
-                <span className="text-xl">{link.icon}</span>
-                <span className="text-sm font-medium">{link.label}</span>
-              </Link>
+              {link.isExternal ? (
+                <a
+                  href={link.path}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 px-4 py-3 rounded-sm transition-all text-stone-600 hover:bg-stone-100 hover:text-stone-900"
+                >
+                  <span className="text-xl">{link.icon}</span>
+                  <span className="text-sm font-medium">{link.label}</span>
+                </a>
+              ) : (
+                <Link
+                  to={link.path}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-sm transition-all ${
+                    link.isActive
+                      ? 'bg-stone-900 text-white'
+                      : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
+                  }`}
+                >
+                  <span className="text-xl">{link.icon}</span>
+                  <span className="text-sm font-medium">{link.label}</span>
+                </Link>
+              )}
             </li>
           ))}
         </ul>
