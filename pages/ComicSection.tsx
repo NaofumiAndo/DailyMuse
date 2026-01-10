@@ -8,9 +8,10 @@ const ComicSection: React.FC = () => {
   const location = useLocation();
 
   const tabs = [
-    { path: '/', label: 'Today' },
-    { path: '/archive', label: 'Archive' },
-    { path: '/admin', label: 'Creator' },
+    { path: '/', label: 'Today', isExternal: false },
+    { path: '/archive', label: 'Archive', isExternal: false },
+    { path: '/admin', label: 'Creator', isExternal: false },
+    { path: 'https://tsume-basketball.vercel.app/', label: 'TSUME-BASKETBALL', isExternal: true },
   ];
 
   return (
@@ -24,17 +25,29 @@ const ComicSection: React.FC = () => {
             {/* Tabs */}
             <nav className="flex gap-1">
               {tabs.map((tab) => (
-                <Link
-                  key={tab.path}
-                  to={tab.path}
-                  className={`px-4 py-2 text-sm font-medium rounded-sm transition-all ${
-                    location.pathname === tab.path
-                      ? 'bg-stone-900 text-white'
-                      : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
-                  }`}
-                >
-                  {tab.label}
-                </Link>
+                tab.isExternal ? (
+                  <a
+                    key={tab.path}
+                    href={tab.path}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-2 text-sm font-medium rounded-sm transition-all text-stone-600 hover:bg-stone-100 hover:text-stone-900"
+                  >
+                    {tab.label}
+                  </a>
+                ) : (
+                  <Link
+                    key={tab.path}
+                    to={tab.path}
+                    className={`px-4 py-2 text-sm font-medium rounded-sm transition-all ${
+                      location.pathname === tab.path
+                        ? 'bg-stone-900 text-white'
+                        : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
+                    }`}
+                  >
+                    {tab.label}
+                  </Link>
+                )
               ))}
             </nav>
           </div>
