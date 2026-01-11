@@ -16,8 +16,8 @@ const Sidebar: React.FC = () => {
   const navLinks = [
     { path: '/', label: '4-Panel Comic', icon: '🎨', isActive: isComicSection, isExternal: false },
     { path: '/story', label: 'Story', icon: '📖', isActive: isStorySection, isExternal: false },
+    { path: 'https://tsume-basketball.vercel.app/', label: 'BASKETBALL PUZZLE', icon: '🏀', isActive: false, isExternal: true },
     { path: '/product-ideas', label: 'Product Ideas', icon: '💡', isActive: isProductIdeas, isExternal: false },
-    { path: 'https://tsume-basketball.vercel.app/', label: 'TSUME-BASKETBALL', icon: '🏀', isActive: false, isExternal: true },
   ];
 
   return (
@@ -75,37 +75,50 @@ const Navigation: React.FC = () => {
   const location = useLocation();
 
   const navLinks = [
-    { path: '/', label: '4-Panel Comic' },
-    { path: '/story', label: 'Story' },
-    { path: '/product-ideas', label: 'Product Ideas' },
+    { path: '/', label: '4-Panel Comic', isExternal: false },
+    { path: '/story', label: 'Story', isExternal: false },
+    { path: 'https://tsume-basketball.vercel.app/', label: 'BASKETBALL PUZZLE', isExternal: true },
+    { path: '/product-ideas', label: 'Product Ideas', isExternal: false },
   ];
 
   return (
     <nav className="fixed top-0 left-0 right-0 bg-stone-50/90 backdrop-blur-sm border-b border-stone-200 z-50 md:hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
-          
+
           {/* Logo */}
           <Link to="/" className="flex-shrink-0 group">
             <span className="font-serif text-2xl font-semibold tracking-tight text-stone-900 group-hover:text-stone-600 transition-colors">
               Daily Muse<span className="text-stone-400">.</span>
             </span>
           </Link>
-          
+
           {/* Desktop Nav */}
           <div className="hidden sm:flex sm:items-center sm:space-x-10">
             {navLinks.map((link) => (
-              <Link
-                key={link.path}
-                to={link.path}
-                className={`text-xs font-bold uppercase tracking-widest transition-all duration-300 ${
-                  location.pathname === link.path
-                    ? 'text-stone-900 border-b-2 border-stone-900 pb-1'
-                    : 'text-stone-500 hover:text-stone-900 hover:border-b-2 hover:border-stone-200 pb-1'
-                }`}
-              >
-                {link.label}
-              </Link>
+              link.isExternal ? (
+                <a
+                  key={link.path}
+                  href={link.path}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs font-bold uppercase tracking-widest transition-all duration-300 text-stone-500 hover:text-stone-900 hover:border-b-2 hover:border-stone-200 pb-1"
+                >
+                  {link.label}
+                </a>
+              ) : (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  className={`text-xs font-bold uppercase tracking-widest transition-all duration-300 ${
+                    location.pathname === link.path
+                      ? 'text-stone-900 border-b-2 border-stone-900 pb-1'
+                      : 'text-stone-500 hover:text-stone-900 hover:border-b-2 hover:border-stone-200 pb-1'
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              )
             ))}
           </div>
 
@@ -126,18 +139,31 @@ const Navigation: React.FC = () => {
         <div className="md:hidden bg-stone-50 border-b border-stone-200 animate-in slide-in-from-top-2">
           <div className="pt-4 pb-6 space-y-2 px-4">
             {navLinks.map((link) => (
-              <Link
-                key={link.path}
-                to={link.path}
-                onClick={() => setIsOpen(false)}
-                className={`block px-3 py-3 text-base font-serif font-medium rounded-md ${
-                  location.pathname === link.path
-                    ? 'bg-stone-100 text-stone-900'
-                    : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
-                }`}
-              >
-                {link.label}
-              </Link>
+              link.isExternal ? (
+                <a
+                  key={link.path}
+                  href={link.path}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setIsOpen(false)}
+                  className="block px-3 py-3 text-base font-serif font-medium rounded-md text-stone-600 hover:bg-stone-50 hover:text-stone-900"
+                >
+                  {link.label}
+                </a>
+              ) : (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  onClick={() => setIsOpen(false)}
+                  className={`block px-3 py-3 text-base font-serif font-medium rounded-md ${
+                    location.pathname === link.path
+                      ? 'bg-stone-100 text-stone-900'
+                      : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              )
             ))}
           </div>
         </div>
