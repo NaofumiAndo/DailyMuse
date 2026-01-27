@@ -36,6 +36,7 @@ const Admin: React.FC = () => {
   const [scheduledDate, setScheduledDate] = useState('');
   const [dateError, setDateError] = useState('');
   const [generationError, setGenerationError] = useState('');
+  const [saveError, setSaveError] = useState('');
 
   // Prompt Refinement State
   const [feedback, setFeedback] = useState('');
@@ -51,6 +52,14 @@ const Admin: React.FC = () => {
   const [editingDate, setEditingDate] = useState<string | null>(null);
   const [newDate, setNewDate] = useState('');
   const [editError, setEditError] = useState('');
+
+  // Calculate max date (5 years from now) for date inputs
+  const getMaxDate = () => {
+    const date = new Date();
+    date.setFullYear(date.getFullYear() + 5);
+    return date.toISOString().split('T')[0];
+  };
+  const maxDate = getMaxDate();
 
   // Check Auth Status on Mount
   useEffect(() => {
@@ -207,6 +216,9 @@ const Admin: React.FC = () => {
   const handleSchedule = async () => {
     if (!generatedTitleImage || !generatedComicImage || !scheduledDate) return;
 
+    setSaveError('');
+    setDateError('');
+
     const conflict = await checkDateConflict(scheduledDate);
     if (conflict) {
       setDateError('❌ A comic is already scheduled for this date. Please choose a different date.');
@@ -229,8 +241,10 @@ const Admin: React.FC = () => {
 
       setStatus(GenerationStatus.COMPLETE);
       loadMuses();
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
+      const errorMsg = e?.message || 'Failed to save. Make sure the backend server is running (npm run server).';
+      setSaveError(`❌ ${errorMsg}`);
       setStatus(GenerationStatus.ERROR);
     }
   };
@@ -303,6 +317,7 @@ const Admin: React.FC = () => {
     setStatus(GenerationStatus.IDLE);
     setScheduledDate('');
     setGenerationError('');
+    setSaveError('');
     setFeedback('');
     setOneTimeInstructions('');
   };
@@ -541,9 +556,10 @@ const Admin: React.FC = () => {
 
                       <div className="bg-stone-50 p-5 border border-stone-200">
                           <label className="block text-xs font-bold text-stone-400 uppercase tracking-wider mb-2">Schedule Date</label>
-                          <input 
-                              type="date" 
+                          <input
+                              type="date"
                               value={scheduledDate}
+                              max={maxDate}
                               onChange={(e) => {
                                   setScheduledDate(e.target.value);
                                   setDateError('');
@@ -551,7 +567,8 @@ const Admin: React.FC = () => {
                               className="w-full p-3 bg-white border border-stone-200 focus:border-stone-900 outline-none mb-2"
                           />
                           {dateError && <p className="text-red-500 text-xs mb-3">{dateError}</p>}
-                          <button 
+                          {saveError && <p className="text-red-500 text-xs mb-3">{saveError}</p>}
+                          <button
                               onClick={handleSchedule}
                               disabled={!scheduledDate || status === GenerationStatus.UPLOADING}
                               className="w-full bg-stone-900 text-white py-3 font-bold uppercase text-xs hover:bg-stone-800 flex items-center justify-center"
@@ -638,6 +655,7 @@ const Admin: React.FC = () => {
                                   <input
                                       type="date"
                                       value={newDate}
+                                      max={maxDate}
                                       onChange={(e) => {
                                           setNewDate(e.target.value);
                                           setEditError('');
