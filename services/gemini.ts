@@ -1,4 +1,5 @@
 import { GoogleGenAI, Modality } from "@google/genai";
+import { DailyComicTemplate } from '../types';
 
 const getFirstImageFromResponse = (response: any): string => {
   const candidates = response.candidates;
@@ -34,7 +35,7 @@ ${charInstruction}`;
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash-image',
+      model: 'gemini-3-pro-image-preview',
       contents: prompt,
       config: {
         responseModalities: [Modality.IMAGE],
@@ -107,7 +108,7 @@ Content from Your Boss:
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash-image',
+      model: 'gemini-3-pro-image-preview',
       contents: prompt,
       config: {
         responseModalities: [Modality.IMAGE],
@@ -174,7 +175,7 @@ Important:
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash-image',
+      model: 'gemini-3-pro-image-preview',
       contents: [
         {
           role: 'user',
@@ -210,6 +211,122 @@ Important:
     }
 
     throw new Error(error?.message || "Failed to edit image. Please try again.");
+  }
+};
+
+export const generateDailyComic = async (
+  template: DailyComicTemplate
+): Promise<{ imageData: string; fullPrompt: string }> => {
+  const apiKey = process.env.GEMINI_API_KEY;
+
+  if (!apiKey) {
+    throw new Error("API key not configured. Please set your GEMINI_API_KEY environment variable.");
+  }
+
+  const ai = new GoogleGenAI({ apiKey });
+
+  const panelCount = template.panels.length;
+
+  // Build panel descriptions dynamically
+  const panelDescriptions = template.panels.map((panel, index) => {
+    const dialogueText = panel.dialogues.length > 0
+      ? panel.dialogues.map(d => `${d.character}: "${d.text}"`).join('\n    ')
+      : 'No dialogue';
+
+    return `Panel ${index + 1}:
+  - Framing: ${panel.framing}
+  - Situation: ${panel.situation}
+  - ${template.characterAName}: ${panel.characterAExplanation}
+  - ${template.characterBName}: ${panel.characterBExplanation}
+  - Background: ${panel.background}
+  - Dialogues:
+    ${dialogueText}`;
+  }).join('\n\n');
+
+  const prompt = `Task: Generate a comic strip with EXACTLY ${panelCount} panels featuring ONLY two characters.
+
+CRITICAL REQUIREMENTS:
+1. The output image MUST contain EXACTLY ${panelCount} panels - no more, no less. Each panel should be clearly separated and numbered from 1 to ${panelCount}.
+2. ONLY show ${template.characterAName} and ${template.characterBName} in the comic. Do NOT add any other characters, people, or anthropomorphic figures unless explicitly mentioned in the background description.
+
+Character References (see attached images):
+- Image 1: ${template.characterAName} (Character A) - Use this EXACT appearance for ${template.characterAName}. This is the ONLY design for this character.
+- Image 2: ${template.characterBName} (Character B) - Use this EXACT appearance for ${template.characterBName}. This is the ONLY design for this character.
+
+CHARACTER RESTRICTION: The comic must feature ONLY these two characters (${template.characterAName} and ${template.characterBName}). No other characters should appear unless specifically mentioned in a panel's background field.
+
+Panel Layout Requirements:
+- Total panels: EXACTLY ${panelCount}
+- Arrange panels in a grid layout within the square image
+- Number each panel clearly (1, 2, 3${panelCount > 3 ? `, ... ${panelCount}` : ''})
+- All ${panelCount} panels must be visible and complete
+
+Panels:
+${panelDescriptions}
+
+Technical Constraints:
+${template.technicalConstraints}
+
+Art Style Details:
+${template.artStyleDetails}
+
+FINAL REMINDER:
+- Output MUST have EXACTLY ${panelCount} panels
+- ONLY ${template.characterAName} and ${template.characterBName} should appear (no other characters)`;
+
+  // Extract base64 data from both character reference images
+  const charARefBase64 = template.characterARefImage.replace(/^data:image\/\w+;base64,/, '');
+  const charBRefBase64 = template.characterBRefImage.replace(/^data:image\/\w+;base64,/, '');
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-pro-image-preview',
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            { text: prompt },
+            {
+              inlineData: {
+                mimeType: 'image/jpeg',
+                data: charARefBase64
+              }
+            },
+            {
+              inlineData: {
+                mimeType: 'image/jpeg',
+                data: charBRefBase64
+              }
+            }
+          ]
+        }
+      ],
+      config: {
+        responseModalities: [Modality.IMAGE],
+        imageConfig: {
+          aspectRatio: "1:1"
+        }
+      }
+    });
+
+    const imageData = getFirstImageFromResponse(response);
+
+    return {
+      imageData,
+      fullPrompt: prompt
+    };
+  } catch (error: any) {
+    console.error("Daily Comic Generation Error:", error);
+
+    if (error?.message?.includes('API key')) {
+      throw new Error("Invalid API key. Please check your Gemini API key configuration.");
+    } else if (error?.message?.includes('quota') || error?.message?.includes('limit')) {
+      throw new Error("API quota exceeded. Please check your billing or try again later.");
+    } else if (error?.message?.includes('safety') || error?.message?.includes('blocked')) {
+      throw new Error("Content was blocked by safety filters. Try modifying your prompt.");
+    }
+
+    throw new Error(error?.message || "Failed to generate daily comic. Please try again.");
   }
 };
 

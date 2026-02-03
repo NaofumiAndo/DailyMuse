@@ -47,8 +47,8 @@ const Home: React.FC = () => {
     );
   }
 
-  // Handle legacy data fallback
-  const titleImg = entry.titleImage;
+  // Handle legacy data fallback and daily comics (which may have no title image)
+  const titleImg = entry.titleImage && entry.titleImage !== '' ? entry.titleImage : null;
   const comicImg = entry.comicImage || (entry as any).imageUrl || (entry as any).panels?.[0]?.imageUrl;
 
   return (

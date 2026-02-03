@@ -76,9 +76,10 @@ app.post('/api/muses', async (req, res) => {
     }
 
     const { scheduledDate, titleImage, comicImage, ...metadata } = entry;
+    const isDailyComic = entry.comicType === 'daily-comic';
 
-    // Save title image
-    if (titleImage && titleImage.startsWith('data:image')) {
+    // Save title image (only for four-panel comics)
+    if (!isDailyComic && titleImage && titleImage.startsWith('data:image')) {
       const base64Data = titleImage.replace(/^data:image\/\w+;base64,/, '');
       const buffer = Buffer.from(base64Data, 'base64');
       await fs.writeFile(
@@ -102,7 +103,7 @@ app.post('/api/muses', async (req, res) => {
       ...metadata,
       id: scheduledDate,
       scheduledDate,
-      titleImage: `/data/muses/${scheduledDate}-title.jpg`,
+      titleImage: isDailyComic ? '' : `/data/muses/${scheduledDate}-title.jpg`,
       comicImage: `/data/muses/${scheduledDate}-comic.jpg`
     };
 
@@ -140,7 +141,7 @@ app.delete('/api/muses/:date', async (req, res) => {
   try {
     const { date } = req.params;
 
-    // Delete files
+    // Delete files (title image may not exist for daily comics)
     await fs.unlink(path.join(MUSES_DIR, `${date}-title.jpg`)).catch(() => {});
     await fs.unlink(path.join(MUSES_DIR, `${date}-comic.jpg`)).catch(() => {});
     await fs.unlink(path.join(MUSES_DIR, `${date}.json`)).catch(() => {});
@@ -188,22 +189,29 @@ app.put('/api/muses/:oldDate', async (req, res) => {
       // File doesn't exist, good to proceed
     }
 
-    // Rename files
-    await fs.rename(
-      path.join(MUSES_DIR, `${oldDate}-title.jpg`),
-      path.join(MUSES_DIR, `${newDate}-title.jpg`)
-    );
+    // Read metadata first to check comic type
+    const metadataPath = path.join(MUSES_DIR, `${oldDate}.json`);
+    const metadata = JSON.parse(await fs.readFile(metadataPath, 'utf-8'));
+    const isDailyComic = metadata.comicType === 'daily-comic';
+
+    // Rename title image file (only if it exists - not for daily comics)
+    if (!isDailyComic) {
+      await fs.rename(
+        path.join(MUSES_DIR, `${oldDate}-title.jpg`),
+        path.join(MUSES_DIR, `${newDate}-title.jpg`)
+      ).catch(() => {});
+    }
+
+    // Rename comic image file
     await fs.rename(
       path.join(MUSES_DIR, `${oldDate}-comic.jpg`),
       path.join(MUSES_DIR, `${newDate}-comic.jpg`)
     );
 
     // Update metadata file
-    const metadataPath = path.join(MUSES_DIR, `${oldDate}.json`);
-    const metadata = JSON.parse(await fs.readFile(metadataPath, 'utf-8'));
     metadata.scheduledDate = newDate;
     metadata.id = newDate;
-    metadata.titleImage = `/data/muses/${newDate}-title.jpg`;
+    metadata.titleImage = isDailyComic ? '' : `/data/muses/${newDate}-title.jpg`;
     metadata.comicImage = `/data/muses/${newDate}-comic.jpg`;
 
     await fs.writeFile(

@@ -94,11 +94,20 @@ export const getEntryByDate = async (dateStr: string): Promise<MuseEntry | null>
     const data = await response.json();
 
     // Convert relative paths to absolute URLs
-    return {
+    // Handle daily comics which may not have a title image
+    const result: MuseEntry = {
       ...data,
-      titleImage: getTitleImagePath(dateStr),
       comicImage: getComicImagePath(dateStr)
     };
+
+    // Only set titleImage if it's a four-panel comic (or has titleImage field)
+    if (data.comicType !== 'daily-comic') {
+      result.titleImage = getTitleImagePath(dateStr);
+    } else {
+      result.titleImage = ''; // Empty for daily comics
+    }
+
+    return result;
   } catch (error) {
     console.error(`Error fetching entry for ${dateStr}:`, error);
     return null;

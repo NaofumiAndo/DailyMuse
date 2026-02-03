@@ -14,7 +14,7 @@ const Sidebar: React.FC = () => {
   const isProductIdeas = location.pathname === '/product-ideas';
 
   const navLinks = [
-    { path: '/', label: '4-Panel Comic', icon: '🎨', isActive: isComicSection, isExternal: false },
+    { path: '/', label: 'Daily Comics', icon: '🎨', isActive: isComicSection, isExternal: false },
     { path: '/story', label: 'Story', icon: '📖', isActive: isStorySection, isExternal: false },
     { path: 'https://tsume-basketball.vercel.app/', label: 'BASKETBALL PUZZLE', icon: '🏀', isActive: false, isExternal: true },
     { path: '/product-ideas', label: 'Product Ideas', icon: '💡', isActive: isProductIdeas, isExternal: false },
@@ -75,7 +75,7 @@ const Navigation: React.FC = () => {
   const location = useLocation();
 
   const navLinks = [
-    { path: '/', label: '4-Panel Comic', isExternal: false },
+    { path: '/', label: 'Daily Comics', isExternal: false },
     { path: '/story', label: 'Story', isExternal: false },
     { path: 'https://tsume-basketball.vercel.app/', label: 'BASKETBALL PUZZLE', isExternal: true },
     { path: '/product-ideas', label: 'Product Ideas', isExternal: false },

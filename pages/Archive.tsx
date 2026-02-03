@@ -1,17 +1,20 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { getPastEntries } from '../services/githubStorage';
-import { MuseEntry } from '../types';
+import { MuseEntry, ComicType } from '../types';
 import { Loader2 } from 'lucide-react';
+
+type FilterType = 'all' | 'four-panel' | 'daily-comic';
 
 const Archive: React.FC = () => {
   const [entries, setEntries] = useState<MuseEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<FilterType>('all');
 
   useEffect(() => {
     const fetchArchive = async () => {
       const now = new Date();
       const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-      
+
       const data = await getPastEntries(today);
       setEntries(data);
       setLoading(false);
@@ -20,6 +23,16 @@ const Archive: React.FC = () => {
     fetchArchive();
   }, []);
 
+  // Filter entries based on selected filter
+  const filteredEntries = useMemo(() => {
+    if (filter === 'all') return entries;
+    return entries.filter(entry => {
+      // Handle legacy entries that don't have comicType field
+      const entryType = entry.comicType || 'four-panel';
+      return entryType === filter;
+    });
+  }, [entries, filter]);
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="flex flex-col items-center mb-16 space-y-4 text-center">
@@ -27,18 +40,56 @@ const Archive: React.FC = () => {
         <div className="w-12 h-px bg-stone-300"></div>
       </div>
 
+      {/* Filter Buttons */}
+      <div className="flex justify-center gap-2 mb-12">
+        <button
+          onClick={() => setFilter('all')}
+          className={`px-4 py-2 text-sm font-medium rounded-sm border transition-all ${
+            filter === 'all'
+              ? 'bg-stone-900 text-white border-stone-900'
+              : 'bg-white text-stone-600 border-stone-200 hover:border-stone-400'
+          }`}
+        >
+          All
+        </button>
+        <button
+          onClick={() => setFilter('four-panel')}
+          className={`px-4 py-2 text-sm font-medium rounded-sm border transition-all ${
+            filter === 'four-panel'
+              ? 'bg-stone-900 text-white border-stone-900'
+              : 'bg-white text-stone-600 border-stone-200 hover:border-stone-400'
+          }`}
+        >
+          4-Panel Comics
+        </button>
+        <button
+          onClick={() => setFilter('daily-comic')}
+          className={`px-4 py-2 text-sm font-medium rounded-sm border transition-all ${
+            filter === 'daily-comic'
+              ? 'bg-stone-900 text-white border-stone-900'
+              : 'bg-white text-stone-600 border-stone-200 hover:border-stone-400'
+          }`}
+        >
+          Daily Comics
+        </button>
+      </div>
+
       {loading ? (
         <div className="flex justify-center py-20">
           <Loader2 className="w-6 h-6 text-stone-800 animate-spin" />
         </div>
-      ) : entries.length === 0 ? (
+      ) : filteredEntries.length === 0 ? (
         <div className="text-center py-20 bg-white rounded-sm border border-stone-200 max-w-2xl mx-auto shadow-sm">
-          <p className="text-stone-400 font-serif italic text-lg">The archive is waiting for its first memory.</p>
+          <p className="text-stone-400 font-serif italic text-lg">
+            {filter === 'all'
+              ? 'The archive is waiting for its first memory.'
+              : `No ${filter === 'four-panel' ? '4-panel' : 'daily'} comics found.`}
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-16">
-          {entries.map((entry) => {
-            const titleImg = entry.titleImage;
+          {filteredEntries.map((entry) => {
+            const titleImg = entry.titleImage && entry.titleImage !== '' ? entry.titleImage : null;
             const comicImg = entry.comicImage || (entry as any).imageUrl || (entry as any).panels?.[0]?.imageUrl;
             const title = entry.title || 'Untitled';
             const subtitle = entry.episodeNumber ? `${entry.episodeNumber}` : (entry as any).concept;
