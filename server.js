@@ -18,6 +18,7 @@ const STORY_ENTRIES_FILE = path.join(STORY_ATLAS_DIR, 'entries.json');
 const STORY_CHAR_REF_FILE = path.join(STORY_ATLAS_DIR, 'character-ref.json');
 const STORY_ART_STYLE_FILE = path.join(STORY_ATLAS_DIR, 'art-style.json');
 const STORIES_FILE = path.join(__dirname, 'public', 'data', 'stories.json');
+const DAILY_COMIC_SETTINGS_FILE = path.join(MUSES_DIR, 'character-settings.json');
 const PRODUCT_IDEAS_FILE = path.join(__dirname, 'public', 'data', 'product-ideas.json');
 const PRODUCT_IMAGES_DIR = path.join(__dirname, 'public', 'data', 'product-images');
 
@@ -25,6 +26,51 @@ const PRODUCT_IMAGES_DIR = path.join(__dirname, 'public', 'data', 'product-image
 await fs.mkdir(MUSES_DIR, { recursive: true });
 await fs.mkdir(STORY_ATLAS_DIR, { recursive: true });
 await fs.mkdir(PRODUCT_IMAGES_DIR, { recursive: true });
+
+/**
+ * Daily Comic: Get character settings
+ */
+app.get('/api/muses/character-settings', async (req, res) => {
+  try {
+    const data = await fs.readFile(DAILY_COMIC_SETTINGS_FILE, 'utf-8');
+    const settings = JSON.parse(data);
+    res.json(settings);
+  } catch (error) {
+    // File doesn't exist yet, return empty settings
+    res.json({
+      characterAName: 'Wooly',
+      characterBName: 'Mr. Wolf',
+      characterARefImage: '',
+      characterBRefImage: ''
+    });
+  }
+});
+
+/**
+ * Daily Comic: Save character settings
+ */
+app.post('/api/muses/character-settings', async (req, res) => {
+  try {
+    const { characterAName, characterBName, characterARefImage, characterBRefImage } = req.body;
+
+    const settings = {
+      characterAName: characterAName || 'Wooly',
+      characterBName: characterBName || 'Mr. Wolf',
+      characterARefImage: characterARefImage || '',
+      characterBRefImage: characterBRefImage || ''
+    };
+
+    await fs.writeFile(
+      DAILY_COMIC_SETTINGS_FILE,
+      JSON.stringify(settings, null, 2)
+    );
+
+    res.json({ success: true, message: 'Character settings saved' });
+  } catch (error) {
+    console.error('Error saving character settings:', error);
+    res.status(500).json({ error: 'Failed to save character settings' });
+  }
+});
 
 /**
  * Save prompt history for a muse entry

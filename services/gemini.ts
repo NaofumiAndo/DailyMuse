@@ -15,7 +15,7 @@ const getFirstImageFromResponse = (response: any): string => {
 }
 
 export const generateTitleImage = async (title: string, number: string, characterDescription: string): Promise<string> => {
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
   if (!apiKey) {
     throw new Error("API key not configured. Please set your GEMINI_API_KEY environment variable.");
@@ -66,7 +66,7 @@ export const generateComic = async (
   concept: string,
   characterDescription: string
 ): Promise<{ imageData: string; fullPrompt: string }> => {
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
   if (!apiKey) {
     throw new Error("API key not configured. Please set your GEMINI_API_KEY environment variable.");
@@ -144,7 +144,7 @@ export const editExistingImage = async (
   currentImageBase64: string,
   editInstructions: string
 ): Promise<string> => {
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
   if (!apiKey) {
     throw new Error("API key not configured. Please set your GEMINI_API_KEY environment variable.");
@@ -217,7 +217,7 @@ Important:
 export const generateDailyComic = async (
   template: DailyComicTemplate
 ): Promise<{ imageData: string; fullPrompt: string }> => {
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
   if (!apiKey) {
     throw new Error("API key not configured. Please set your GEMINI_API_KEY environment variable.");
@@ -334,7 +334,7 @@ export const refinePromptWithFeedback = async (
   currentPrompt: string,
   feedback: string
 ): Promise<string> => {
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
   if (!apiKey) {
     throw new Error("API key not configured. Please set your GEMINI_API_KEY environment variable.");
