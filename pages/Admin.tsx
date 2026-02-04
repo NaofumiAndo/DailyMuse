@@ -134,38 +134,53 @@ const Admin: React.FC = () => {
   const loadCharacterSettings = async () => {
     try {
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      console.log('Loading character settings from:', `${API_URL}/api/muses/character-settings`);
       const response = await fetch(`${API_URL}/api/muses/character-settings`);
       if (response.ok) {
         const settings = await response.json();
+        console.log('Loaded character settings:', {
+          hasImageA: !!settings.characterARefImage,
+          hasImageB: !!settings.characterBRefImage,
+          nameA: settings.characterAName,
+          nameB: settings.characterBName
+        });
         if (settings.characterAName) setCharacterAName(settings.characterAName);
         if (settings.characterBName) setCharacterBName(settings.characterBName);
         if (settings.characterARefImage) setCharacterARefImage(settings.characterARefImage);
         if (settings.characterBRefImage) setCharacterBRefImage(settings.characterBRefImage);
+      } else {
+        console.error('Failed to load character settings:', response.status);
       }
     } catch (error) {
       console.error('Failed to load character settings:', error);
     }
   };
 
-  // Save character settings when they change
-  const saveCharacterSettings = async (settings: {
-    characterAName?: string;
-    characterBName?: string;
-    characterARefImage?: string;
-    characterBRefImage?: string;
-  }) => {
+  // Save character settings - takes all values explicitly to avoid stale closure issues
+  const saveCharacterSettings = async (
+    nameA: string,
+    nameB: string,
+    imageA: string,
+    imageB: string
+  ) => {
     try {
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-      await fetch(`${API_URL}/api/muses/character-settings`, {
+      console.log('Saving character settings to:', `${API_URL}/api/muses/character-settings`);
+      const response = await fetch(`${API_URL}/api/muses/character-settings`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          characterAName: settings.characterAName ?? characterAName,
-          characterBName: settings.characterBName ?? characterBName,
-          characterARefImage: settings.characterARefImage ?? characterARefImage,
-          characterBRefImage: settings.characterBRefImage ?? characterBRefImage
+          characterAName: nameA,
+          characterBName: nameB,
+          characterARefImage: imageA,
+          characterBRefImage: imageB
         })
       });
+      if (response.ok) {
+        console.log('Character settings saved successfully');
+      } else {
+        console.error('Failed to save character settings:', response.status, await response.text());
+      }
     } catch (error) {
       console.error('Failed to save character settings:', error);
     }
@@ -216,7 +231,8 @@ const Admin: React.FC = () => {
     reader.onload = (e) => {
       const result = e.target?.result as string;
       setCharacterARefImage(result);
-      saveCharacterSettings({ characterARefImage: result });
+      // Pass all values explicitly to avoid stale closures
+      saveCharacterSettings(characterAName, characterBName, result, characterBRefImage);
     };
     reader.readAsDataURL(file);
   }, [characterAName, characterBName, characterBRefImage]);
@@ -230,7 +246,8 @@ const Admin: React.FC = () => {
     reader.onload = (e) => {
       const result = e.target?.result as string;
       setCharacterBRefImage(result);
-      saveCharacterSettings({ characterBRefImage: result });
+      // Pass all values explicitly to avoid stale closures
+      saveCharacterSettings(characterAName, characterBName, characterARefImage, result);
     };
     reader.readAsDataURL(file);
   }, [characterAName, characterBName, characterARefImage]);
@@ -283,19 +300,17 @@ const Admin: React.FC = () => {
   const handleCharacterANameChange = (name: string) => {
     setCharacterAName(name);
     // Debounce save - only save after user stops typing
-    const timeoutId = setTimeout(() => {
-      saveCharacterSettings({ characterAName: name });
+    setTimeout(() => {
+      saveCharacterSettings(name, characterBName, characterARefImage, characterBRefImage);
     }, 500);
-    return () => clearTimeout(timeoutId);
   };
 
   const handleCharacterBNameChange = (name: string) => {
     setCharacterBName(name);
     // Debounce save - only save after user stops typing
-    const timeoutId = setTimeout(() => {
-      saveCharacterSettings({ characterBName: name });
+    setTimeout(() => {
+      saveCharacterSettings(characterAName, name, characterARefImage, characterBRefImage);
     }, 500);
-    return () => clearTimeout(timeoutId);
   };
 
   // --- PANEL MANAGEMENT ---
