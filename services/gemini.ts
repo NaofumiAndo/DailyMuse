@@ -40,7 +40,8 @@ ${charInstruction}`;
       config: {
         responseModalities: [Modality.IMAGE],
         imageConfig: {
-          aspectRatio: "1:1"
+          aspectRatio: "1:1",
+          imageSize: "1K"
         }
       }
     });
@@ -113,7 +114,8 @@ Content from Your Boss:
       config: {
         responseModalities: [Modality.IMAGE],
         imageConfig: {
-          aspectRatio: "1:1"
+          aspectRatio: "1:1",
+          imageSize: "1K"
         }
       }
     });
@@ -193,7 +195,8 @@ Important:
       config: {
         responseModalities: [Modality.IMAGE],
         imageConfig: {
-          aspectRatio: "1:1"
+          aspectRatio: "1:1",
+          imageSize: "1K"
         }
       }
     });
@@ -304,7 +307,8 @@ FINAL REMINDER:
       config: {
         responseModalities: [Modality.IMAGE],
         imageConfig: {
-          aspectRatio: "1:1"
+          aspectRatio: "1:1",
+          imageSize: "1K"
         }
       }
     });
